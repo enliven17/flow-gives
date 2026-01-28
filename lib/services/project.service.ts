@@ -93,23 +93,24 @@ export class ProjectService {
     // Validate fundraiser address
     if (!data.fundraiserAddress || data.fundraiserAddress.trim().length === 0) {
       errors.push({ field: 'fundraiserAddress', message: 'Fundraiser address is required' });
-    } else if (!this.isValidStacksAddress(data.fundraiserAddress)) {
-      errors.push({ field: 'fundraiserAddress', message: 'Invalid Stacks address format' });
+    } else if (!this.isValidFlowAddress(data.fundraiserAddress)) {
+      errors.push({ field: 'fundraiserAddress', message: 'Invalid Flow address format' });
     }
 
     return errors;
   }
 
   /**
-   * Validate Stacks address format
+   * Validate Flow address format
+   * 
+   * Flow addresses are 0x-prefixed with exactly 16 hexadecimal characters
    * 
    * @param address - Address to validate
    * @returns true if valid, false otherwise
    */
-  private isValidStacksAddress(address: string): boolean {
-    // Stacks addresses start with ST (testnet) or SP (mainnet)
-    // and are typically 40-42 characters long
-    return /^(ST|SP)[0-9A-Z]{38,40}$/.test(address);
+  private isValidFlowAddress(address: string): boolean {
+    // Flow addresses: 0x followed by exactly 16 hex characters
+    return /^0x[a-fA-F0-9]{16}$/.test(address);
   }
 
   /**

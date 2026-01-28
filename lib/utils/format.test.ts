@@ -9,8 +9,11 @@ import {
   calculateFundingPercentage,
   calculateTimeRemaining,
   formatWalletAddress,
-  formatUSDCx,
+  formatFlow,
   formatTimeRemaining,
+  toMicroFlow,
+  fromMicroFlow,
+  isValidFlowAddress,
 } from './format';
 
 describe('calculateFundingPercentage', () => {
@@ -40,8 +43,8 @@ describe('calculateFundingPercentage', () => {
     });
 
     it('should handle very large amounts', () => {
-      const largeGoal = 1000000000000n; // 1 million USDCx
-      const largeRaised = 500000000000n; // 500k USDCx
+      const largeGoal = 1000000000000n; // 10,000 Flow
+      const largeRaised = 500000000000n; // 5,000 Flow
       expect(calculateFundingPercentage(largeRaised, largeGoal)).toBe(50);
     });
 
@@ -108,27 +111,27 @@ describe('calculateTimeRemaining', () => {
 
 describe('formatWalletAddress', () => {
   describe('unit tests', () => {
-    it('should truncate standard Stacks addresses correctly', () => {
-      const address = 'ST1X6Y2Z3A4B5C6D7E8F9G0H1I2J3K4L5M6N7O8P';
-      expect(formatWalletAddress(address)).toBe('ST1X6Y...7O8P');
+    it('should truncate standard Flow addresses correctly', () => {
+      const address = '0x1234567890abcdef';
+      expect(formatWalletAddress(address)).toBe('0x1234...cdef');
     });
 
-    it('should truncate mainnet addresses correctly', () => {
-      const address = 'SP3Y2ZSH8P7D50B0VBTSX11S7XSG24M1VB9YFQA4K';
-      expect(formatWalletAddress(address)).toBe('SP3Y2Z...QA4K');
+    it('should truncate longer Flow addresses correctly', () => {
+      const address = '0xabcdef1234567890';
+      expect(formatWalletAddress(address)).toBe('0xabcd...7890');
     });
 
     it('should handle short addresses without truncation', () => {
-      expect(formatWalletAddress('ST123')).toBe('ST123');
-      expect(formatWalletAddress('SP12345678')).toBe('SP12345678');
+      expect(formatWalletAddress('0x123')).toBe('0x123');
+      expect(formatWalletAddress('0x12345678')).toBe('0x12345678');
     });
 
     it('should handle exactly 10 character addresses', () => {
-      expect(formatWalletAddress('ST12345678')).toBe('ST12345678');
+      expect(formatWalletAddress('0x12345678')).toBe('0x12345678');
     });
 
     it('should handle 11 character addresses (minimum for truncation)', () => {
-      expect(formatWalletAddress('ST123456789')).toBe('ST1234...6789');
+      expect(formatWalletAddress('0x123456789')).toBe('0x1234...6789');
     });
 
     it('should handle empty string', () => {
@@ -145,49 +148,165 @@ describe('formatWalletAddress', () => {
   });
 });
 
-describe('formatUSDCx', () => {
+describe('formatFlow', () => {
   describe('unit tests', () => {
-    it('should format whole USDCx amounts', () => {
-      expect(formatUSDCx(1000000n)).toBe('1.00');
-      expect(formatUSDCx(5000000n)).toBe('5.00');
-      expect(formatUSDCx(100000000n)).toBe('100.00');
+    it('should format whole Flow amounts', () => {
+      expect(formatFlow(100000000n)).toBe('1.00');
+      expect(formatFlow(500000000n)).toBe('5.00');
+      expect(formatFlow(10000000000n)).toBe('100.00');
     });
 
-    it('should format fractional USDCx amounts', () => {
-      expect(formatUSDCx(1500000n)).toBe('1.50');
-      expect(formatUSDCx(1250000n)).toBe('1.25');
-      expect(formatUSDCx(1010000n)).toBe('1.01');
+    it('should format fractional Flow amounts', () => {
+      expect(formatFlow(150000000n)).toBe('1.50');
+      expect(formatFlow(125000000n)).toBe('1.25');
+      expect(formatFlow(101000000n)).toBe('1.01');
     });
 
-    it('should format amounts less than 1 USDCx', () => {
-      expect(formatUSDCx(500000n)).toBe('0.50');
-      expect(formatUSDCx(123456n)).toBe('0.12');
-      expect(formatUSDCx(10000n)).toBe('0.01');
+    it('should format amounts less than 1 Flow', () => {
+      expect(formatFlow(50000000n)).toBe('0.50');
+      expect(formatFlow(12345678n)).toBe('0.12');
+      expect(formatFlow(1000000n)).toBe('0.01');
     });
 
     it('should format zero amount', () => {
-      expect(formatUSDCx(0n)).toBe('0.00');
+      expect(formatFlow(0n)).toBe('0.00');
     });
 
     it('should handle large amounts', () => {
-      expect(formatUSDCx(1000000000000n)).toBe('1000000.00');
-      expect(formatUSDCx(999999000000n)).toBe('999999.00');
+      expect(formatFlow(100000000000000n)).toBe('1000000.00');
+      expect(formatFlow(99999900000000n)).toBe('999999.00');
     });
 
     it('should always show 2 decimal places', () => {
-      const formatted = formatUSDCx(1234567n);
+      const formatted = formatFlow(123456789n);
       expect(formatted).toMatch(/^\d+\.\d{2}$/);
     });
 
     it('should round amounts with more than 2 decimals', () => {
-      // 1.234567 USDCx should display as 1.23
-      expect(formatUSDCx(1234567n)).toBe('1.23');
-      // 1.999999 USDCx rounds to 2.00
-      expect(formatUSDCx(1999999n)).toBe('2.00');
-      // 1.995000 USDCx rounds to 2.00
-      expect(formatUSDCx(1995000n)).toBe('2.00');
-      // 1.994999 USDCx rounds to 1.99
-      expect(formatUSDCx(1994999n)).toBe('1.99');
+      // 1.23456789 Flow should display as 1.23
+      expect(formatFlow(123456789n)).toBe('1.23');
+      // 1.99999999 Flow rounds to 2.00
+      expect(formatFlow(199999999n)).toBe('2.00');
+      // 1.99500000 Flow rounds to 2.00
+      expect(formatFlow(199500000n)).toBe('2.00');
+      // 1.99499999 Flow rounds to 1.99
+      expect(formatFlow(199499999n)).toBe('1.99');
+    });
+  });
+});
+
+describe('toMicroFlow', () => {
+  describe('unit tests', () => {
+    it('should convert whole Flow amounts to micro-Flow', () => {
+      expect(toMicroFlow(1)).toBe(100000000n);
+      expect(toMicroFlow(5)).toBe(500000000n);
+      expect(toMicroFlow(100)).toBe(10000000000n);
+    });
+
+    it('should convert fractional Flow amounts to micro-Flow', () => {
+      expect(toMicroFlow(1.5)).toBe(150000000n);
+      expect(toMicroFlow(0.5)).toBe(50000000n);
+      expect(toMicroFlow(0.01)).toBe(1000000n);
+    });
+
+    it('should handle zero', () => {
+      expect(toMicroFlow(0)).toBe(0n);
+    });
+
+    it('should handle very small amounts', () => {
+      expect(toMicroFlow(0.00000001)).toBe(1n);
+      expect(toMicroFlow(0.00000002)).toBe(2n);
+    });
+
+    it('should floor fractional micro-Flow values', () => {
+      // 1.123456789 Flow = 112345678.9 micro-Flow, should floor to 112345678
+      expect(toMicroFlow(1.123456789)).toBe(112345678n);
+    });
+
+    it('should handle large amounts', () => {
+      expect(toMicroFlow(1000000)).toBe(100000000000000n);
+    });
+  });
+});
+
+describe('fromMicroFlow', () => {
+  describe('unit tests', () => {
+    it('should convert micro-Flow to Flow amounts', () => {
+      expect(fromMicroFlow(100000000n)).toBe(1);
+      expect(fromMicroFlow(500000000n)).toBe(5);
+      expect(fromMicroFlow(10000000000n)).toBe(100);
+    });
+
+    it('should convert fractional amounts', () => {
+      expect(fromMicroFlow(150000000n)).toBe(1.5);
+      expect(fromMicroFlow(50000000n)).toBe(0.5);
+      expect(fromMicroFlow(1000000n)).toBe(0.01);
+    });
+
+    it('should handle zero', () => {
+      expect(fromMicroFlow(0n)).toBe(0);
+    });
+
+    it('should handle very small amounts', () => {
+      expect(fromMicroFlow(1n)).toBe(0.00000001);
+      expect(fromMicroFlow(10n)).toBe(0.0000001);
+    });
+
+    it('should handle large amounts', () => {
+      expect(fromMicroFlow(100000000000000n)).toBe(1000000);
+    });
+
+    it('should be inverse of toMicroFlow for whole numbers', () => {
+      expect(fromMicroFlow(toMicroFlow(1))).toBe(1);
+      expect(fromMicroFlow(toMicroFlow(100))).toBe(100);
+      expect(fromMicroFlow(toMicroFlow(1000))).toBe(1000);
+    });
+  });
+});
+
+describe('isValidFlowAddress', () => {
+  describe('unit tests', () => {
+    it('should accept valid Flow addresses', () => {
+      expect(isValidFlowAddress('0x0123456789abcdef')).toBe(true);
+      expect(isValidFlowAddress('0xABCDEF0123456789')).toBe(true);
+      expect(isValidFlowAddress('0x1234567890ABCDEF')).toBe(true);
+      expect(isValidFlowAddress('0xabcdefABCDEF0123')).toBe(true);
+    });
+
+    it('should reject addresses without 0x prefix', () => {
+      expect(isValidFlowAddress('0123456789abcdef')).toBe(false);
+      expect(isValidFlowAddress('1234567890ABCDEF')).toBe(false);
+    });
+
+    it('should reject addresses with wrong length', () => {
+      expect(isValidFlowAddress('0x123')).toBe(false);
+      expect(isValidFlowAddress('0x0123456789abcde')).toBe(false); // 15 chars
+      expect(isValidFlowAddress('0x0123456789abcdef0')).toBe(false); // 17 chars
+      expect(isValidFlowAddress('0x0123456789abcdef01')).toBe(false); // 18 chars
+    });
+
+    it('should reject addresses with non-hex characters', () => {
+      expect(isValidFlowAddress('0x0123456789abcdeg')).toBe(false);
+      expect(isValidFlowAddress('0x0123456789abcdez')).toBe(false);
+      expect(isValidFlowAddress('0x0123456789abcd!f')).toBe(false);
+      expect(isValidFlowAddress('0x0123456789 bcdef')).toBe(false);
+    });
+
+    it('should reject empty string', () => {
+      expect(isValidFlowAddress('')).toBe(false);
+    });
+
+    it('should reject just 0x', () => {
+      expect(isValidFlowAddress('0x')).toBe(false);
+    });
+
+    it('should reject addresses with uppercase X', () => {
+      expect(isValidFlowAddress('0X0123456789abcdef')).toBe(false);
+    });
+
+    it('should accept mixed case hex characters', () => {
+      expect(isValidFlowAddress('0xAbCdEf0123456789')).toBe(true);
+      expect(isValidFlowAddress('0x0123456789AbCdEf')).toBe(true);
     });
   });
 });

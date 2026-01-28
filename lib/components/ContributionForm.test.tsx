@@ -370,7 +370,7 @@ describe('ContributionForm', () => {
         blockHeight: 12345,
         createdAt: new Date(),
       });
-      mockContributionService.getExplorerUrl = jest.fn().mockReturnValue('https://explorer.stacks.co/txid/test-tx-123');
+      mockContributionService.getExplorerUrl = jest.fn().mockReturnValue('https://testnet.flowscan.org/transaction/test-tx-123');
 
       render(
         <ContributionForm
@@ -467,7 +467,7 @@ describe('ContributionForm', () => {
 
       mockContributionService.contribute = jest.fn().mockResolvedValue(mockContributionResult);
       mockContributionService.waitForConfirmationAndRecord = jest.fn().mockRejectedValue(mockError);
-      mockContributionService.getExplorerUrl = jest.fn().mockReturnValue('https://explorer.stacks.co/txid/test-tx-123');
+      mockContributionService.getExplorerUrl = jest.fn().mockReturnValue('https://testnet.flowscan.org/transaction/test-tx-123');
 
       render(
         <ContributionForm

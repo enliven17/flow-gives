@@ -64,11 +64,11 @@ export function calculateTimeRemaining(
  * for privacy and space efficiency.
  * 
  * @param address - Full wallet address
- * @returns Truncated address (e.g., "ST1X6Y...AB12")
+ * @returns Truncated address (e.g., "0x1234...5678")
  * 
  * @example
- * formatWalletAddress('ST1X6Y2Z3A4B5C6D7E8F9G0H1I2J3K4L5M6N7O8P') 
- * // Returns "ST1X6Y...N7O8P"
+ * formatWalletAddress('0x1234567890abcdef') 
+ * // Returns "0x1234...cdef"
  * 
  * Validates: Requirements 6.6
  */

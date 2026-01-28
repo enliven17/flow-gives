@@ -137,19 +137,19 @@ describe('ProjectService', () => {
       );
     });
 
-    it('should reject project with invalid Stacks address', async () => {
+    it('should reject project with invalid Flow address', async () => {
       const invalidInput = { ...validInput, fundraiserAddress: 'invalid-address' };
 
       await expect(service.createProject(invalidInput)).rejects.toThrow(
-        'fundraiserAddress: Invalid Stacks address format'
+        'fundraiserAddress: Invalid Flow address format'
       );
     });
 
-    it('should accept mainnet Stacks address (SP)', async () => {
+    it('should accept valid Flow address (lowercase)', async () => {
       const mockProject: Project = {
         id: '123',
         ...validInput,
-        fundraiserAddress: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7',
+        fundraiserAddress: '0x1234567890abcdef',
         totalRaised: 0n,
         contributorCount: 0,
         status: ProjectStatus.DRAFT,
@@ -167,16 +167,16 @@ describe('ProjectService', () => {
       await expect(
         service.createProject({
           ...validInput,
-          fundraiserAddress: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7',
+          fundraiserAddress: '0x1234567890abcdef',
         })
       ).resolves.toBeDefined();
     });
 
-    it('should accept testnet Stacks address (ST)', async () => {
+    it('should accept valid Flow address (uppercase)', async () => {
       const mockProject: Project = {
         id: '123',
         ...validInput,
-        fundraiserAddress: 'ST2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7',
+        fundraiserAddress: '0xABCDEF1234567890',
         totalRaised: 0n,
         contributorCount: 0,
         status: ProjectStatus.DRAFT,
@@ -194,7 +194,7 @@ describe('ProjectService', () => {
       await expect(
         service.createProject({
           ...validInput,
-          fundraiserAddress: 'ST2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7',
+          fundraiserAddress: '0xABCDEF1234567890',
         })
       ).resolves.toBeDefined();
     });

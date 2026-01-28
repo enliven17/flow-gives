@@ -47,8 +47,8 @@ export class WalletService {
     // Restore session
     this.restoreSession();
 
-    // Subscribe to auth changes
-    this.subscribeToAuthChanges();
+    // Initialize internal auth subscription
+    this.initializeAuthSubscription();
   }
 
   private restoreSession() {
@@ -73,7 +73,11 @@ export class WalletService {
     }
   }
 
-  private subscribeToAuthChanges() {
+  /**
+   * Initialize internal subscription to FCL auth changes
+   * This maintains the internal wallet state
+   */
+  private initializeAuthSubscription() {
     if (typeof window === 'undefined') return;
 
     this.authChangeUnsubscribe = fcl.currentUser.subscribe((user: any) => {
@@ -192,8 +196,8 @@ export class WalletService {
       // Query Flow token balance using FCL
       const balance = await fcl.query({
         cadence: `
-          import FlowToken from 0x7e60df042a9c0868
-          import FungibleToken from 0x9a0766d93b6608b7
+          import FlowToken from 0xFlowToken
+          import FungibleToken from 0xFungibleToken
 
           access(all) fun main(address: Address): UFix64 {
             let account = getAccount(address)
@@ -208,8 +212,8 @@ export class WalletService {
         args: (arg: any, t: any) => [arg(address, t.Address)]
       });
 
-      // Balance is returned as UFix64 string
-      return balance || '0.0';
+      // Balance is returned as UFix64 string with 8 decimal precision
+      return balance || '0.00000000';
     } catch (error) {
       throw new Error(
         `Failed to fetch Flow balance: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -220,10 +224,29 @@ export class WalletService {
   /**
    * Subscribe to wallet authentication changes
    * 
+   * Allows external components to be notified when the wallet connection state changes.
+   * The callback receives the current user object from FCL, which includes:
+   * - addr: The wallet address (null if disconnected)
+   * - loggedIn: Boolean indicating if user is authenticated
+   * 
    * Requirements: 2.6
    * 
    * @param callback Function to call when auth state changes
-   * @returns Unsubscribe function
+   * @returns Unsubscribe function to stop receiving updates
+   * 
+   * @example
+   * ```typescript
+   * const unsubscribe = walletService.subscribeToAuthChanges((user) => {
+   *   if (user?.addr) {
+   *     console.log('Wallet connected:', user.addr);
+   *   } else {
+   *     console.log('Wallet disconnected');
+   *   }
+   * });
+   * 
+   * // Later, to stop receiving updates:
+   * unsubscribe();
+   * ```
    */
   subscribeToAuthChanges(callback: (user: any) => void): () => void {
     if (typeof window === 'undefined') {

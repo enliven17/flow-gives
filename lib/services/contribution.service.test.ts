@@ -435,12 +435,12 @@ describe('ContributionService', () => {
   describe('getExplorerUrl', () => {
     it('should return correct explorer URL', () => {
       mockTransactionService.getExplorerUrl.mockReturnValue(
-        'https://explorer.stacks.co/txid/0x1234567890abcdef?chain=testnet'
+        'https://testnet.flowscan.org/transaction/0x1234567890abcdef'
       );
 
       const url = service.getExplorerUrl('0x1234567890abcdef');
 
-      expect(url).toBe('https://explorer.stacks.co/txid/0x1234567890abcdef?chain=testnet');
+      expect(url).toBe('https://testnet.flowscan.org/transaction/0x1234567890abcdef');
       expect(mockTransactionService.getExplorerUrl).toHaveBeenCalledWith('0x1234567890abcdef');
     });
   });

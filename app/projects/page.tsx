@@ -84,7 +84,7 @@ function ProjectsContent() {
         </div>
         <Link
           href="/projects/new"
-          className="w-full sm:w-auto px-5 py-2.5 glass-orange text-text-primary rounded-lg font-medium hover:opacity-90 transition-all inline-flex items-center justify-center gap-2 min-h-[44px] touch-manipulation"
+          className="w-full sm:w-auto px-5 py-2.5 glass-green text-text-primary rounded-lg font-medium hover:opacity-90 transition-all inline-flex items-center justify-center gap-2 min-h-[44px] touch-manipulation"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

@@ -320,7 +320,7 @@ export function ProjectForm({
           type="button"
           onClick={() => handleSubmit(true)}
           disabled={isSubmitting || isPublishing}
-          className="flex-1 px-5 sm:px-6 py-2.5 sm:py-2.5 glass-orange text-text-primary rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[44px] touch-manipulation text-sm sm:text-base font-medium"
+          className="flex-1 px-5 sm:px-6 py-2.5 sm:py-2.5 glass-green text-text-primary rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[44px] touch-manipulation text-sm sm:text-base font-medium"
         >
           {isPublishing ? 'Publishing...' : mode === 'edit' ? 'Update & Publish' : 'Publish'}
         </button>

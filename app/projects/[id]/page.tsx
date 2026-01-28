@@ -9,7 +9,7 @@ import { ContributionForm } from '@/lib/components/ContributionForm';
 import { CommentSection } from '@/lib/components/CommentSection';
 import { Footer } from '@/lib/components/Footer';
 import { Project, Contribution } from '@/lib/models/project';
-import { formatUSDCx, formatWalletAddress, calculateFundingPercentage, calculateTimeRemaining } from '@/lib/utils/format';
+import { formatFlow, formatWalletAddress, calculateFundingPercentage, calculateTimeRemaining } from '@/lib/utils/format';
 import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 
@@ -206,7 +206,7 @@ function ProjectDetailContent() {
           <p className="text-text-secondary mb-4">{error || 'Project not found'}</p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-4 py-2 glass-orange text-text-primary rounded-lg transition-all hover:opacity-90"
+            className="inline-flex items-center gap-2 px-4 py-2 glass-green text-text-primary rounded-lg transition-all hover:opacity-90"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -258,7 +258,7 @@ function ProjectDetailContent() {
                 </h1>
                 <div className="flex items-center gap-3 flex-wrap">
                   <p className="text-sm sm:text-base text-text-secondary flex items-center gap-2">
-                    <svg className="w-5 h-5 flex-shrink-0 text-orange-500/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 flex-shrink-0 text-accent-primary/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     <span className="truncate font-medium">by {formatWalletAddress(project.fundraiserAddress)}</span>
@@ -267,7 +267,7 @@ function ProjectDetailContent() {
                     className={`px-4 py-2 rounded-full text-sm font-bold border ${project.status === 'active'
                         ? 'bg-accent-success/20 text-accent-success border-accent-success/40'
                         : project.status === 'funded'
-                          ? 'bg-orange-500/20 text-orange-500 border-orange-500/40'
+                          ? 'bg-accent-primary/20 text-accent-primary border-accent-primary/40'
                           : project.status === 'expired'
                             ? 'bg-text-muted/20 text-text-muted border-text-muted/40'
                             : 'bg-accent-warning/20 text-accent-warning border-accent-warning/40'
@@ -288,19 +288,19 @@ function ProjectDetailContent() {
             {/* Funding Metrics */}
             <div className="border-t border-border-default pt-6">
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-500/5 border border-orange-500/20">
+                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-accent-primary/10 to-accent-primary/5 border border-accent-primary/20">
                   <p className="text-xs text-text-muted mb-2">Raised</p>
-                  <p className="text-2xl sm:text-3xl font-black text-orange-500">
-                    {formatUSDCx(project.totalRaised)}
+                  <p className="text-2xl sm:text-3xl font-black text-accent-primary">
+                    {formatFlow(project.totalRaised)}
                   </p>
-                  <p className="text-xs text-text-muted mt-1">USDCx</p>
+                  <p className="text-xs text-text-muted mt-1">FLOW</p>
                 </div>
                 <div className="text-center p-4 rounded-xl bg-background-tertiary/50 border border-border-default">
                   <p className="text-xs text-text-muted mb-2">Goal</p>
                   <p className="text-2xl sm:text-3xl font-black text-text-primary">
-                    {formatUSDCx(project.fundingGoal)}
+                    {formatFlow(project.fundingGoal)}
                   </p>
-                  <p className="text-xs text-text-muted mt-1">USDCx</p>
+                  <p className="text-xs text-text-muted mt-1">FLOW</p>
                 </div>
               </div>
 
@@ -308,7 +308,7 @@ function ProjectDetailContent() {
               <div className="relative mb-4">
                 <div className="w-full bg-background-tertiary rounded-full h-5 overflow-hidden shadow-inner">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500 transition-all duration-1000 ease-out shadow-lg"
+                    className="h-full rounded-full bg-gradient-to-r from-accent-primary via-accent-success to-accent-primary transition-all duration-1000 ease-out shadow-lg"
                     style={{ width: `${Math.min(percentFunded, 100)}%` }}
                   >
                   </div>
@@ -340,7 +340,7 @@ function ProjectDetailContent() {
           {isActive && (
             <div className="bg-background-secondary rounded-xl p-6 sm:p-8 border border-border-default shadow-lg">
               <h2 className="text-2xl font-bold text-text-primary mb-6 flex items-center gap-3">
-                <span className="w-1 h-8 bg-orange-500/60 rounded-full"></span>
+                <span className="w-1 h-8 bg-accent-primary/60 rounded-full"></span>
                 Support This Project
               </h2>
               <ContributionForm
@@ -360,7 +360,7 @@ function ProjectDetailContent() {
           {/* Contributions List */}
           <div className="bg-background-secondary rounded-xl p-6 border border-border-default shadow-lg sticky top-24">
             <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
-              <span className="w-1 h-6 bg-orange-500/60 rounded-full"></span>
+              <span className="w-1 h-6 bg-accent-primary/60 rounded-full"></span>
               Recent Contributions
             </h2>
             {loadingContributions ? (
@@ -384,7 +384,7 @@ function ProjectDetailContent() {
                     key={contribution.id}
                     className="flex items-center gap-3 p-3 rounded-lg bg-background-tertiary/50 border border-border-default hover:bg-background-tertiary transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-full bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-500/90 font-bold flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-accent-primary/10 border border-accent-primary/30 flex items-center justify-center text-accent-primary/90 font-bold flex-shrink-0">
                       {formatWalletAddress(contribution.contributorAddress).charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -392,7 +392,7 @@ function ProjectDetailContent() {
                         {formatWalletAddress(contribution.contributorAddress)}
                       </p>
                       <p className="text-xs text-text-muted">
-                        {formatUSDCx(contribution.amount)} USDCx
+                        {formatFlow(contribution.amount)} FLOW
                       </p>
                     </div>
                   </div>

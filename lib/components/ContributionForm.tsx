@@ -17,7 +17,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '../contexts/wallet.context';
 import { TransactionService } from '../services/transaction.service';
-import { formatUSDCx } from '../utils/format';
+import { formatFlow, toMicroFlow, fromMicroFlow } from '../utils/format';
 
 /**
  * Transaction status type
@@ -54,7 +54,7 @@ export interface ContributionFormProps {
   className?: string;
 
   /**
-   * Minimum contribution amount in USDCx (default: 1)
+   * Minimum contribution amount in FLOW (default: 1)
    */
   minAmount?: number;
 }
@@ -97,26 +97,6 @@ export function ContributionForm({
   }, [isConnected, refreshBalance]);
 
   /**
-   * Convert USDCx to micro-USDCx
-   * 
-   * @param usdcx - Amount in USDCx
-   * @returns Amount in micro-USDCx
-   */
-  const toMicroUSDCx = (usdcx: number): bigint => {
-    return BigInt(Math.floor(usdcx * 1_000_000));
-  };
-
-  /**
-   * Convert micro-USDCx to USDCx
-   * 
-   * @param microUsdcx - Amount in micro-USDCx
-   * @returns Amount in USDCx
-   */
-  const fromMicroUSDCx = (microUsdcx: bigint): number => {
-    return Number(microUsdcx) / 1_000_000;
-  };
-
-  /**
    * Validate contribution amount
    * 
    * Requirements: 3.2
@@ -147,15 +127,15 @@ export function ContributionForm({
 
     // Check minimum amount
     if (numAmount < minAmount) {
-      setAmountError(`Amount must be at least ${minAmount} USDCx`);
+      setAmountError(`Amount must be at least ${minAmount} FLOW`);
       return false;
     }
 
     // Check if user has sufficient balance
     if (balance !== null) {
-      const microAmount = toMicroUSDCx(numAmount);
+      const microAmount = toMicroFlow(numAmount);
       if (microAmount > balance) {
-        setAmountError(`Insufficient balance. You have ${formatUSDCx(balance)} USDCx`);
+        setAmountError(`Insufficient balance. You have ${formatFlow(balance)} FLOW`);
         return false;
       }
     }
@@ -205,7 +185,7 @@ export function ContributionForm({
     }
 
     const numAmount = parseFloat(amount);
-    const microAmount = toMicroUSDCx(numAmount);
+    const microAmount = toMicroFlow(numAmount);
 
     try {
       // Reset error state
@@ -407,9 +387,9 @@ export function ContributionForm({
       {isConnected && balance !== null && (
         <div className="mb-4 p-3 bg-background-tertiary rounded-lg border border-border-default">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-text-secondary">Your USDCx Balance:</span>
+            <span className="text-sm text-text-secondary">Your FLOW Balance:</span>
             <span className="text-lg font-semibold text-text-primary">
-              {formatUSDCx(balance)} USDCx
+              {formatFlow(balance)} FLOW
             </span>
           </div>
         </div>
@@ -423,18 +403,18 @@ export function ContributionForm({
             htmlFor="contribution-amount"
             className="block text-sm font-medium text-text-primary mb-2"
           >
-            Contribution Amount (USDCx)
+            Contribution Amount (FLOW)
           </label>
           <input
             id="contribution-amount"
             type="number"
-            step="0.000001"
+            step="0.00000001"
             min={minAmount}
             value={amount}
             onChange={handleAmountChange}
             onBlur={handleAmountBlur}
             disabled={isDisabled}
-            placeholder={`Enter amount (min: ${minAmount} USDCx)`}
+            placeholder={`Enter amount (min: ${minAmount} FLOW)`}
             className={`w-full px-4 py-3 sm:py-2 bg-background-tertiary border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary placeholder-text-muted text-base sm:text-sm min-h-[44px] touch-manipulation ${amountError
                 ? 'border-accent-error focus:ring-accent-error'
                 : 'border-border-default'
@@ -459,7 +439,7 @@ export function ContributionForm({
           disabled={isDisabled || !!amountError}
           className={`w-full px-5 sm:px-6 py-2.5 sm:py-2.5 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background-secondary min-h-[44px] touch-manipulation text-sm sm:text-base ${isDisabled || amountError
               ? 'bg-background-tertiary text-text-muted cursor-not-allowed opacity-50'
-              : 'glass-orange text-text-primary hover:opacity-90 focus:ring-orange-500/50'
+              : 'glass-green text-text-primary hover:opacity-90 focus:ring-accent-primary/50'
             }`}
           aria-label="Contribute to project"
         >
@@ -595,7 +575,7 @@ export function ContributionForm({
                         href={getExplorerUrl()!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 mt-2 text-xs text-orange-500/90 hover:text-orange-500/70 hover:underline"
+                        className="inline-flex items-center gap-1 mt-2 text-xs text-accent-primary/90 hover:text-accent-primary/70 hover:underline"
                       >
                         View in Explorer
                         <svg

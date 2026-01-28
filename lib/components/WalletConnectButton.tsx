@@ -82,12 +82,14 @@ export function WalletConnectButton({
 
   /**
    * Format balance for display
+   * 
+   * Requirements: 8.1, 8.2, 8.6
    */
-  const formatBalance = (bal: bigint | null): string => {
+  const formatBalance = (bal: string | null): string => {
     if (bal === null) return '...';
-    // Convert micro-USDCx to USDCx (6 decimals)
-    const usdcx = Number(bal) / 1_000_000;
-    return usdcx.toFixed(2);
+    // Balance is already in Flow format from wallet service
+    const flow = parseFloat(bal);
+    return flow.toFixed(2);
   };
 
   // Loading state
@@ -144,8 +146,8 @@ export function WalletConnectButton({
               </span>
             </div>
             {showBalance && (
-              <span className="text-xs text-text-secondary block mt-1" aria-label={`Balance: ${formatBalance(balance)} USDCx`}>
-                {formatBalance(balance)} USDCx
+              <span className="text-xs text-text-secondary block mt-1" aria-label={`Balance: ${formatBalance(balance)} FLOW`}>
+                {formatBalance(balance)} FLOW
               </span>
             )}
           </div>
@@ -176,7 +178,7 @@ export function WalletConnectButton({
     <div className={`flex flex-col gap-2 ${className}`}>
       <button
         onClick={handleConnect}
-        className="w-full px-4 sm:px-6 py-2.5 sm:py-2 glass-orange text-text-primary font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 focus:ring-offset-background-secondary min-h-[44px] touch-manipulation text-sm sm:text-base hover:opacity-90"
+        className="w-full px-4 sm:px-6 py-2.5 sm:py-2 glass-green text-text-primary font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:ring-offset-2 focus:ring-offset-background-secondary min-h-[44px] touch-manipulation text-sm sm:text-base hover:opacity-90"
         aria-label="Connect wallet"
       >
         Connect Wallet

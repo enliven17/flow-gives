@@ -131,6 +131,41 @@ export interface Database {
           created_at?: string
         }
       }
+      transactions: {
+        Row: {
+          id: string
+          tx_id: string
+          tx_type: 'create_project' | 'contribute' | 'withdraw' | 'refund'
+          wallet_address: string
+          project_id: string | null
+          status: 'pending' | 'confirmed' | 'failed'
+          error_message: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tx_id: string
+          tx_type: 'create_project' | 'contribute' | 'withdraw' | 'refund'
+          wallet_address: string
+          project_id?: string | null
+          status?: 'pending' | 'confirmed' | 'failed'
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tx_id?: string
+          tx_type?: 'create_project' | 'contribute' | 'withdraw' | 'refund'
+          wallet_address?: string
+          project_id?: string | null
+          status?: 'pending' | 'confirmed' | 'failed'
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

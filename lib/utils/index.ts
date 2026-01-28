@@ -1,5 +1,5 @@
 /**
- * Utility functions for StacksGives crowdfunding platform
+ * Utility functions for FlowGives crowdfunding platform
  * 
  * This module exports formatting and calculation utilities used throughout
  * the application for consistent data display and computation.
@@ -9,8 +9,11 @@ export {
   calculateFundingPercentage,
   calculateTimeRemaining,
   formatWalletAddress,
-  formatUSDCx,
+  formatFlow,
   formatTimeRemaining,
+  toMicroFlow,
+  fromMicroFlow,
+  isValidFlowAddress,
 } from './format';
 
 export {

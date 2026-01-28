@@ -24,10 +24,10 @@ describe('Tailwind Configuration - Dark Theme', () => {
       expect(config.theme?.extend?.colors).toHaveProperty('accent');
       const accent = (config.theme?.extend?.colors as any).accent;
       
-      expect(accent).toHaveProperty('primary', '#3b82f6');
-      expect(accent).toHaveProperty('secondary', '#8b5cf6');
+      expect(accent).toHaveProperty('primary', '#10b981');
+      expect(accent).toHaveProperty('secondary', '#059669');
       expect(accent).toHaveProperty('success', '#10b981');
-      expect(accent).toHaveProperty('warning', '#f59e0b');
+      expect(accent).toHaveProperty('warning', '#10b981');
       expect(accent).toHaveProperty('error', '#ef4444');
     });
 

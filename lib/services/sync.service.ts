@@ -37,7 +37,7 @@ export class SyncService {
 
   /**
    * Start the sync service
-   * Requirements: 6.5
+   * Requirements: 6.5, 6.7
    */
   async start(): Promise<void> {
     if (this.running) {
@@ -48,19 +48,21 @@ export class SyncService {
     this.running = true;
     console.log('Starting sync service...');
 
-    // Initial sync
-    await this.syncAll();
+    // Initial sync with retry logic
+    try {
+      await this.syncAllWithRetry();
+    } catch (error) {
+      console.error('Initial sync failed after retries:', error);
+      this.emitError(error as Error);
+    }
 
     // Set up polling interval
     this.intervalId = setInterval(async () => {
       try {
-        await this.syncAll();
+        await this.syncAllWithRetry();
       } catch (error) {
-        console.error('Sync error:', error);
+        console.error('Sync failed after retries:', error);
         this.emitError(error as Error);
-        
-        // Retry with exponential backoff
-        await this.retryWithBackoff(async () => await this.syncAll());
       }
     }, this.config.pollInterval);
   }
@@ -87,6 +89,14 @@ export class SyncService {
   }
 
   /**
+   * Sync all event types with retry logic
+   * Requirements: 6.7
+   */
+  private async syncAllWithRetry(): Promise<void> {
+    await this.retryWithBackoff(async () => await this.syncAll());
+  }
+
+  /**
    * Sync all event types
    */
   private async syncAll(): Promise<void> {
@@ -98,7 +108,7 @@ export class SyncService {
 
   /**
    * Sync project creation events
-   * Requirements: 6.1
+   * Requirements: 6.1, 6.7
    */
   async syncProjects(): Promise<void> {
     try {
@@ -110,13 +120,14 @@ export class SyncService {
       }
     } catch (error) {
       console.error('Error syncing projects:', error);
+      this.logSyncError('syncProjects', error as Error);
       throw error;
     }
   }
 
   /**
    * Sync contribution events
-   * Requirements: 6.2
+   * Requirements: 6.2, 6.7
    */
   async syncContributions(): Promise<void> {
     try {
@@ -128,13 +139,14 @@ export class SyncService {
       }
     } catch (error) {
       console.error('Error syncing contributions:', error);
+      this.logSyncError('syncContributions', error as Error);
       throw error;
     }
   }
 
   /**
    * Sync withdrawal events
-   * Requirements: 6.3
+   * Requirements: 6.3, 6.7
    */
   async syncWithdrawals(): Promise<void> {
     try {
@@ -146,13 +158,14 @@ export class SyncService {
       }
     } catch (error) {
       console.error('Error syncing withdrawals:', error);
+      this.logSyncError('syncWithdrawals', error as Error);
       throw error;
     }
   }
 
   /**
    * Sync refund events
-   * Requirements: 6.4
+   * Requirements: 6.4, 6.7
    */
   async syncRefunds(): Promise<void> {
     try {
@@ -164,6 +177,7 @@ export class SyncService {
       }
     } catch (error) {
       console.error('Error syncing refunds:', error);
+      this.logSyncError('syncRefunds', error as Error);
       throw error;
     }
   }
@@ -194,7 +208,8 @@ export class SyncService {
    * Requirements: 6.6
    */
   private sortEventsByBlockHeight(events: FlowEvent[]): FlowEvent[] {
-    return events.sort((a, b) => {
+    // Create a copy to avoid mutating the original array
+    return [...events].sort((a, b) => {
       if (a.blockHeight !== b.blockHeight) {
         return a.blockHeight - b.blockHeight;
       }
@@ -354,18 +369,48 @@ export class SyncService {
     maxRetries = 5,
     baseDelay = 1000
   ): Promise<void> {
+    let lastError: Error | null = null;
+
     for (let i = 0; i < maxRetries; i++) {
       try {
         await fn();
+        // Success - log if this was a retry
+        if (i > 0) {
+          console.log(`Sync succeeded after ${i} retries`);
+        }
         return;
       } catch (error) {
-        if (i === maxRetries - 1) throw error;
+        lastError = error as Error;
+        
+        if (i === maxRetries - 1) {
+          console.error(`Sync failed after ${maxRetries} retries:`, lastError);
+          throw lastError;
+        }
         
         const delay = baseDelay * Math.pow(2, i);
-        console.log(`Retry ${i + 1}/${maxRetries} after ${delay}ms`);
+        console.log(`Retry ${i + 1}/${maxRetries} after ${delay}ms due to error: ${lastError.message}`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
+
+    // This should never be reached, but TypeScript needs it
+    if (lastError) throw lastError;
+  }
+
+  /**
+   * Log sync errors for monitoring
+   * Requirements: 6.7
+   */
+  private logSyncError(operation: string, error: Error): void {
+    const errorLog = {
+      timestamp: new Date().toISOString(),
+      operation,
+      error: error.message,
+      stack: error.stack,
+      lastSyncedBlock: this.lastSyncedBlock,
+    };
+    
+    console.error('[SyncService Error]', JSON.stringify(errorLog, null, 2));
   }
 
   /**

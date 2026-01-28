@@ -31,3 +31,8 @@ export {
   type UpdateProjectInput,
   type ValidationError,
 } from './project.service';
+
+export {
+  SyncService,
+  type SyncServiceConfig,
+} from './sync.service';

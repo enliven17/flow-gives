@@ -118,7 +118,7 @@ export function CommentSection({ projectId }: CommentSectionProps) {
   return (
     <div className="bg-background-secondary rounded-lg p-4 sm:p-6 md:p-8 border border-border-default">
       <h2 className="text-xl sm:text-2xl font-bold text-text-primary mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-        <span className="w-1 h-6 sm:h-8 bg-orange-500/60 rounded-full"></span>
+        <span className="w-1 h-6 sm:h-8 bg-accent-primary/60 rounded-full"></span>
         Comments ({comments.length})
       </h2>
 
@@ -133,7 +133,7 @@ export function CommentSection({ projectId }: CommentSectionProps) {
                 setError(null);
               }}
               placeholder="Share your thoughts about this project..."
-              className="w-full px-4 py-3 bg-background-tertiary border border-border-default rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 resize-none transition-all"
+              className="w-full px-4 py-3 bg-background-tertiary border border-border-default rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary/50 resize-none transition-all"
               rows={4}
               maxLength={2000}
               disabled={submitting}
@@ -150,7 +150,7 @@ export function CommentSection({ projectId }: CommentSectionProps) {
           <button
             type="submit"
             disabled={submitting || !newComment.trim()}
-            className="px-5 py-2.5 glass-orange text-text-primary rounded-lg font-medium hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            className="px-5 py-2.5 glass-green text-text-primary rounded-lg font-medium hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
             {submitting ? (
               <>
@@ -198,7 +198,7 @@ export function CommentSection({ projectId }: CommentSectionProps) {
               className="p-4 rounded-lg bg-background-tertiary/50 border border-border-default hover:bg-background-tertiary transition-colors"
             >
               <div className="flex items-start gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-500/90 font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-accent-primary/10 border border-accent-primary/30 flex items-center justify-center text-accent-primary/90 font-bold flex-shrink-0">
                   {formatWalletAddress(comment.author_address).charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">

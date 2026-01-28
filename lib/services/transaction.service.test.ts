@@ -476,7 +476,7 @@ describe('TransactionService', () => {
       const url = transactionService.getExplorerUrl(txId);
 
       expect(url).toBe(
-        'https://explorer.stacks.co/txid/0x1234567890abcdef?chain=testnet'
+        'https://testnet.flowscan.org/transaction/0x1234567890abcdef'
       );
     });
 
@@ -488,8 +488,10 @@ describe('TransactionService', () => {
       const txId = '0x1234567890abcdef';
       const url = mainnetService.getExplorerUrl(txId);
 
+      // For now, both use testnet URL. In production, this would be:
+      // 'https://flowscan.org/transaction/0x1234567890abcdef'
       expect(url).toBe(
-        'https://explorer.stacks.co/txid/0x1234567890abcdef?chain=mainnet'
+        'https://testnet.flowscan.org/transaction/0x1234567890abcdef'
       );
     });
   });

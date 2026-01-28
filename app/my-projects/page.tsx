@@ -142,7 +142,7 @@ function MyProjectsContent() {
           <p className="text-lg sm:text-xl text-text-secondary mb-4 sm:mb-6">You haven&apos;t created any projects yet.</p>
           <Link
             href="/projects/new"
-            className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 glass-orange text-text-primary rounded-lg font-medium hover:opacity-90 transition-all min-h-[44px] touch-manipulation text-sm sm:text-base"
+            className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 glass-green text-text-primary rounded-lg font-medium hover:opacity-90 transition-all min-h-[44px] touch-manipulation text-sm sm:text-base"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -236,7 +236,7 @@ export default function MyProjectsPage() {
               <div className="flex items-center gap-2 sm:gap-4">
                 <Link
                   href="/projects/new"
-                  className="hidden sm:flex items-center gap-2 px-4 py-2 glass-orange text-text-primary rounded-lg font-medium hover:opacity-90 transition-all"
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 glass-green text-text-primary rounded-lg font-medium hover:opacity-90 transition-all"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

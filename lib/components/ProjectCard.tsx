@@ -15,7 +15,7 @@
 
 import React from 'react';
 import { Project } from '../models/project';
-import { formatUSDCx, formatTimeRemaining } from '../utils/format';
+import { formatFlow, formatTimeRemaining } from '../utils/format';
 
 /**
  * ProjectCard props
@@ -149,7 +149,7 @@ export function ProjectCard({
       ) : (
         <div className="relative w-full h-48 bg-background-tertiary flex items-center justify-center border border-border-default">
           <svg
-            className="w-20 h-20 text-text-muted group-hover:text-orange-500/80 transition-colors duration-300"
+            className="w-20 h-20 text-text-muted group-hover:text-accent-primary/80 transition-colors duration-300"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -177,7 +177,7 @@ export function ProjectCard({
       {/* Project Content */}
       <div className="p-4 sm:p-6">
         {/* Title */}
-        <h3 className="text-lg sm:text-xl font-bold text-text-primary mb-2 sm:mb-3 line-clamp-2 group-hover:text-orange-500/80 transition-colors duration-300">
+        <h3 className="text-lg sm:text-xl font-bold text-text-primary mb-2 sm:mb-3 line-clamp-2 group-hover:text-accent-primary/80 transition-colors duration-300">
           {project.title}
         </h3>
 
@@ -215,10 +215,10 @@ export function ProjectCard({
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
               <span className="text-base sm:text-lg font-bold text-text-primary gradient-text">
-                {formatUSDCx(project.totalRaised)} USDCx
+                {formatFlow(project.totalRaised)} FLOW
               </span>
               <span className="text-xs text-text-muted">
-                of {formatUSDCx(project.fundingGoal)} USDCx
+                of {formatFlow(project.fundingGoal)} FLOW
               </span>
             </div>
             <div className="text-right">

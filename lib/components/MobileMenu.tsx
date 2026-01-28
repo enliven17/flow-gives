@@ -73,7 +73,7 @@ export function MobileMenu({ isOpen, onClose, showWallet = false }: MobileMenuPr
             <Link
               href="/projects/new"
               onClick={onClose}
-              className="px-4 py-3 glass-orange text-text-primary rounded-lg font-medium hover:opacity-90 transition-opacity text-center"
+              className="px-4 py-3 glass-green text-text-primary rounded-lg font-medium hover:opacity-90 transition-opacity text-center"
             >
               Create Project
             </Link>

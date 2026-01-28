@@ -14,7 +14,7 @@
 
 import React, { useState } from 'react';
 import { Contribution } from '../models/project';
-import { formatUSDCx, formatWalletAddress } from '../utils/format';
+import { formatFlow, formatWalletAddress } from '../utils/format';
 
 /**
  * ContributionList props
@@ -262,7 +262,7 @@ export function ContributionList({
             {/* Contribution amount */}
             <div className="ml-4 flex-shrink-0">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-accent-success/20 text-accent-success border border-accent-success/30">
-                {formatUSDCx(contribution.amount)} USDCx
+                {formatFlow(contribution.amount)} FLOW
               </span>
             </div>
           </div>
@@ -275,10 +275,10 @@ export function ContributionList({
           <button
             onClick={handleLoadMore}
             disabled={isLoadingMore}
-            className={`px-5 sm:px-6 py-2.5 sm:py-2 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background-secondary focus:ring-orange-500/50 min-h-[44px] touch-manipulation text-sm sm:text-base ${
+            className={`px-5 sm:px-6 py-2.5 sm:py-2 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background-secondary focus:ring-accent-primary/50 min-h-[44px] touch-manipulation text-sm sm:text-base ${
               isLoadingMore
                 ? 'bg-background-tertiary text-text-muted cursor-not-allowed opacity-50'
-                : 'glass-orange text-text-primary hover:opacity-90'
+                : 'glass-green text-text-primary hover:opacity-90'
             }`}
             aria-label="Load more contributions"
           >

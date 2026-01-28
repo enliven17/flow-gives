@@ -4,7 +4,6 @@
  */
 
 import * as fcl from '@onflow/fcl';
-import * as t from '@onflow/types';
 
 export interface CreateProjectParams {
   title: string;
@@ -237,11 +236,58 @@ export class ContractService {
     return result as boolean;
   }
 
-  async waitForTransaction(txId: string, timeout = 60000): Promise<'confirmed' | 'failed'> {
+  /**
+   * Poll transaction status once using snapshot
+   * Requirements: 3.8
+   */
+  async pollTransactionStatus(txId: string): Promise<'pending' | 'confirmed' | 'failed'> {
     try {
-      await fcl.tx(txId).onceSealed();
-      return 'confirmed';
+      const txStatus = await fcl.tx(txId).snapshot();
+      
+      // Flow transaction status codes:
+      // 0 = Unknown, 1 = Pending, 2 = Finalized, 3 = Executed, 4 = Sealed, 5 = Expired
+      if (txStatus.status === 4) {
+        return 'confirmed'; // Sealed
+      } else if (txStatus.status === 5) {
+        return 'failed'; // Expired
+      } else if (txStatus.errorMessage) {
+        return 'failed'; // Has error
+      } else {
+        return 'pending'; // Still processing
+      }
     } catch {
+      return 'failed';
+    }
+  }
+
+  /**
+   * Wait for transaction to be sealed with timeout
+   * Requirements: 3.8
+   */
+  async waitForTransaction(
+    txId: string,
+    timeout: number = 60000
+  ): Promise<'confirmed' | 'failed'> {
+    try {
+      // Create a timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Transaction timeout')), timeout);
+      });
+
+      // Race between transaction sealing and timeout
+      await Promise.race([
+        fcl.tx(txId).onceSealed(),
+        timeoutPromise,
+      ]);
+
+      return 'confirmed';
+    } catch (error) {
+      // Check if it's a timeout or transaction failure
+      if (error instanceof Error && error.message === 'Transaction timeout') {
+        // On timeout, check final status
+        const status = await this.pollTransactionStatus(txId);
+        return status === 'confirmed' ? 'confirmed' : 'failed';
+      }
       return 'failed';
     }
   }
