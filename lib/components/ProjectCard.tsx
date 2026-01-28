@@ -101,16 +101,17 @@ export function ProjectCard({
 
   /**
    * Get progress bar color based on funding percentage (dark theme)
+   * Uses green shades for all funding levels
    */
   const getProgressColor = (): string => {
     if (project.percentFunded >= 100) {
-      return 'bg-accent-success';
+      return 'bg-accent-success'; // Bright green for 100%+
     } else if (project.percentFunded >= 75) {
-      return 'bg-accent-primary';
+      return 'bg-accent-primary'; // Primary green for 75-99%
     } else if (project.percentFunded >= 50) {
-      return 'bg-accent-warning';
+      return 'bg-accent-secondary'; // Dark green for 50-74%
     } else {
-      return 'bg-text-muted';
+      return 'bg-accent-secondary/60'; // Muted green for <50%
     }
   };
 

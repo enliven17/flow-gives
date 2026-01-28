@@ -17,7 +17,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '../contexts/wallet.context';
 import { TransactionService } from '../services/transaction.service';
-import { formatFlow, toMicroFlow, fromMicroFlow } from '../utils/format';
+import { formatFlow, toMicroFlow, fromMicroFlow, isValidFlowAddress } from '../utils/format';
 
 /**
  * Transaction status type
@@ -83,11 +83,21 @@ export function ContributionForm({
   // Form state
   const [amount, setAmount] = useState<string>('');
   const [amountError, setAmountError] = useState<string>('');
+  const [addressError, setAddressError] = useState<string>('');
 
   // Transaction state
   const [txStatus, setTxStatus] = useState<TransactionStatus>('idle');
   const [txId, setTxId] = useState<string | null>(null);
   const [txError, setTxError] = useState<string | null>(null);
+
+  // Validate fundraiser address on mount and when it changes
+  useEffect(() => {
+    if (fundraiserAddress && !isValidFlowAddress(fundraiserAddress)) {
+      setAddressError('Invalid Flow address format. Address must be 0x followed by 16 hexadecimal characters.');
+    } else {
+      setAddressError('');
+    }
+  }, [fundraiserAddress]);
 
   // Refresh balance when component mounts
   useEffect(() => {
@@ -99,7 +109,7 @@ export function ContributionForm({
   /**
    * Validate contribution amount
    * 
-   * Requirements: 3.2
+   * Requirements: 3.2, 11.5
    */
   const validateAmount = (value: string): boolean => {
     setAmountError('');
@@ -131,11 +141,18 @@ export function ContributionForm({
       return false;
     }
 
+    // Validate Flow token precision (8 decimal places)
+    const decimalPart = value.split('.')[1];
+    if (decimalPart && decimalPart.length > 8) {
+      setAmountError('Flow tokens support a maximum of 8 decimal places');
+      return false;
+    }
+
     // Check if user has sufficient balance
     if (balance !== null) {
-      const microAmount = toMicroFlow(numAmount);
-      if (microAmount > balance) {
-        setAmountError(`Insufficient balance. You have ${formatFlow(balance)} FLOW`);
+      const balanceNum = parseFloat(balance);
+      if (numAmount > balanceNum) {
+        setAmountError(`Insufficient FLOW balance. You have ${parseFloat(balance).toFixed(8)} FLOW available`);
         return false;
       }
     }
@@ -168,14 +185,25 @@ export function ContributionForm({
   /**
    * Handle form submission
    * 
-   * Requirements: 3.1, 3.2, 3.4
+   * Requirements: 3.1, 3.2, 3.4, 11.5
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate wallet connection
     if (!isConnected || !address) {
-      setTxError('Please connect your wallet to contribute');
+      setTxError('Please connect your Flow wallet to contribute');
+      return;
+    }
+
+    // Validate fundraiser address
+    if (!fundraiserAddress) {
+      setTxError('Fundraiser address is required');
+      return;
+    }
+
+    if (!isValidFlowAddress(fundraiserAddress)) {
+      setTxError('Invalid fundraiser Flow address format');
       return;
     }
 
@@ -209,7 +237,9 @@ export function ContributionForm({
 
       if (!validateResponse.ok) {
         const errorData = await validateResponse.json();
-        throw new Error(errorData.error || 'Failed to validate contribution');
+        const errorMessage = errorData.error || 'Failed to validate contribution';
+        // Provide Flow-specific error context
+        throw new Error(`Flow blockchain validation failed: ${errorMessage}`);
       }
 
       const { fundraiserAddress: apiFundraiserAddress, memo } = await validateResponse.json();
@@ -219,7 +249,12 @@ export function ContributionForm({
       const recipientAddress = fundraiserAddress || apiFundraiserAddress;
 
       if (!recipientAddress) {
-        throw new Error('Fundraiser address is required');
+        throw new Error('Fundraiser Flow address is required');
+      }
+
+      // Validate recipient address format
+      if (!isValidFlowAddress(recipientAddress)) {
+        throw new Error('Invalid fundraiser Flow address format');
       }
 
       // Step 2: Create transaction service and create transaction
@@ -266,15 +301,15 @@ export function ContributionForm({
         });
 
         if (!recordResponse.ok) {
-          let errorMessage = 'Failed to record contribution';
+          let errorMessage = 'Failed to record contribution on Flow blockchain';
           try {
             const errorData = await recordResponse.json();
             errorMessage = errorData.error || errorMessage;
-            console.error('Contribution recording error:', errorData);
+            console.error('Flow contribution recording error:', errorData);
           } catch (parseError) {
             const text = await recordResponse.text();
             console.error('Failed to parse error response:', text);
-            errorMessage = `Server error: ${recordResponse.status} ${recordResponse.statusText}`;
+            errorMessage = `Flow blockchain error: ${recordResponse.status} ${recordResponse.statusText}`;
           }
           throw new Error(errorMessage);
         }
@@ -319,7 +354,7 @@ export function ContributionForm({
 
     } catch (error) {
       setTxStatus('failed');
-      const errorMessage = error instanceof Error ? error.message : 'Failed to submit contribution';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit Flow contribution';
       setTxError(errorMessage);
 
       // Call error callback
@@ -366,7 +401,7 @@ export function ContributionForm({
   /**
    * Check if form is disabled
    */
-  const isDisabled = !isConnected || isSubmitting;
+  const isDisabled = !isConnected || isSubmitting || !!addressError;
 
   return (
     <div className={`bg-background-secondary rounded-lg shadow-md p-6 border border-border-default ${className}`}>
@@ -383,13 +418,24 @@ export function ContributionForm({
         </div>
       )}
 
+      {/* Address validation error */}
+      {addressError && (
+        <div
+          className="mb-4 p-4 bg-accent-error/20 border border-accent-error/30 rounded-lg text-accent-error"
+          role="alert"
+        >
+          <p className="font-medium">Invalid Address</p>
+          <p className="text-sm">{addressError}</p>
+        </div>
+      )}
+
       {/* Balance display */}
       {isConnected && balance !== null && (
         <div className="mb-4 p-3 bg-background-tertiary rounded-lg border border-border-default">
           <div className="flex justify-between items-center">
             <span className="text-sm text-text-secondary">Your FLOW Balance:</span>
             <span className="text-lg font-semibold text-text-primary">
-              {formatFlow(balance)} FLOW
+              {parseFloat(balance).toFixed(2)} FLOW
             </span>
           </div>
         </div>

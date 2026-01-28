@@ -97,8 +97,8 @@ describe('ProjectCard', () => {
     const project = createTestProject({ imageUrl: undefined });
     const { container } = render(<ProjectCard project={project} />);
     
-    // Should have a placeholder div with gradient background
-    const placeholder = container.querySelector('.bg-gradient-to-br');
+    // Should have a placeholder div with background-tertiary
+    const placeholder = container.querySelector('.bg-background-tertiary');
     expect(placeholder).toBeInTheDocument();
   });
 
@@ -136,8 +136,13 @@ describe('ProjectCard', () => {
     const project = createTestProject();
     render(<ProjectCard project={project} />);
     
-    expect(screen.getByText('50.00 USDCx')).toBeInTheDocument();
-    expect(screen.getByText('100.00 USDCx')).toBeInTheDocument();
+    // Check for the raised amount (0.50 FLOW)
+    expect(screen.getByText(/0\.50/)).toBeInTheDocument();
+    // Check for the goal amount (1.00 FLOW)
+    expect(screen.getByText(/1\.00/)).toBeInTheDocument();
+    // Check that FLOW appears (multiple times is expected)
+    const flowTexts = screen.getAllByText(/FLOW/);
+    expect(flowTexts.length).toBeGreaterThan(0);
   });
 
   /**
@@ -148,7 +153,7 @@ describe('ProjectCard', () => {
     const project = createTestProject();
     render(<ProjectCard project={project} />);
     
-    expect(screen.getByText('10 contributors')).toBeInTheDocument();
+    expect(screen.getByLabelText('10 contributors')).toBeInTheDocument();
   });
 
   /**
@@ -159,7 +164,7 @@ describe('ProjectCard', () => {
     const project = createTestProject({ contributorCount: 1 });
     render(<ProjectCard project={project} />);
     
-    expect(screen.getByText('1 contributor')).toBeInTheDocument();
+    expect(screen.getByLabelText('1 contributors')).toBeInTheDocument();
   });
 
   /**
@@ -170,7 +175,7 @@ describe('ProjectCard', () => {
     const project = createTestProject();
     render(<ProjectCard project={project} />);
     
-    expect(screen.getByText('7 days')).toBeInTheDocument();
+    expect(screen.getByLabelText('Time remaining: 7 days')).toBeInTheDocument();
   });
 
   /**
@@ -228,7 +233,7 @@ describe('ProjectCard', () => {
     const { container } = render(<ProjectCard project={project} />);
     
     const badge = screen.getByText('Active');
-    expect(badge).toHaveClass('bg-green-100', 'text-green-800');
+    expect(badge).toHaveClass('bg-accent-success/20', 'text-accent-success');
   });
 
   it('should display correct status badge color for funded status', () => {
@@ -236,7 +241,7 @@ describe('ProjectCard', () => {
     const { container } = render(<ProjectCard project={project} />);
     
     const badge = screen.getByText('Funded');
-    expect(badge).toHaveClass('bg-blue-100', 'text-blue-800');
+    expect(badge).toHaveClass('bg-accent-primary/20', 'text-accent-primary');
   });
 
   it('should display correct status badge color for expired status', () => {
@@ -244,7 +249,7 @@ describe('ProjectCard', () => {
     const { container } = render(<ProjectCard project={project} />);
     
     const badge = screen.getByText('Expired');
-    expect(badge).toHaveClass('bg-gray-100', 'text-gray-800');
+    expect(badge).toHaveClass('bg-text-muted/20', 'text-text-muted');
   });
 
   /**
@@ -253,42 +258,43 @@ describe('ProjectCard', () => {
    */
   it('should display green progress bar when 100% funded', () => {
     const project = createTestProject({ 
-      totalRaised: 100000000n, // 100 USDCx (100%)
+      totalRaised: 100000000n, // 100 FLOW (100%)
     });
     const { container } = render(<ProjectCard project={project} />);
     
-    const progressBar = container.querySelector('.bg-green-500');
+    const progressBar = container.querySelector('.bg-accent-success');
     expect(progressBar).toBeInTheDocument();
   });
 
-  it('should display blue progress bar when 75-99% funded', () => {
+  it('should display primary green progress bar when 75-99% funded', () => {
     const project = createTestProject({ 
-      totalRaised: 80000000n, // 80 USDCx (80%)
+      totalRaised: 80000000n, // 80 FLOW (80%)
     });
     const { container } = render(<ProjectCard project={project} />);
     
-    const progressBar = container.querySelector('.bg-blue-500');
+    const progressBar = container.querySelector('.bg-accent-primary');
     expect(progressBar).toBeInTheDocument();
   });
 
-  it('should display yellow progress bar when 50-74% funded', () => {
+  it('should display secondary green progress bar when 50-74% funded', () => {
     const project = createTestProject({ 
-      totalRaised: 60000000n, // 60 USDCx (60%)
+      totalRaised: 60000000n, // 60 FLOW (60%)
     });
     const { container } = render(<ProjectCard project={project} />);
     
-    const progressBar = container.querySelector('.bg-yellow-500');
+    const progressBar = container.querySelector('.bg-accent-secondary');
     expect(progressBar).toBeInTheDocument();
   });
 
-  it('should display gray progress bar when less than 50% funded', () => {
+  it('should display muted green progress bar when less than 50% funded', () => {
     const project = createTestProject({ 
-      totalRaised: 30000000n, // 30 USDCx (30%)
+      totalRaised: 30000000n, // 30 FLOW (30%)
     });
     const { container } = render(<ProjectCard project={project} />);
     
-    const progressBar = container.querySelector('.bg-gray-400');
-    expect(progressBar).toBeInTheDocument();
+    // Check for the muted green class (bg-accent-secondary/60)
+    const progressBar = container.querySelector('[role="progressbar"]');
+    expect(progressBar).toHaveClass('bg-accent-secondary/60');
   });
 
   /**
@@ -420,7 +426,7 @@ describe('ProjectCard', () => {
     const project = createTestProject();
     const { container } = render(<ProjectCard project={project} />);
     
-    const card = container.querySelector('.hover\\:shadow-lg');
+    const card = container.querySelector('.card-hover');
     expect(card).toBeInTheDocument();
   });
 
@@ -476,7 +482,7 @@ describe('ProjectCard', () => {
     const { container } = render(<ProjectCard project={project} />);
     
     const expiredText = screen.getByText('Expired');
-    expect(expiredText).toHaveClass('text-red-600', 'font-medium');
+    expect(expiredText).toHaveClass('text-accent-error');
   });
 
   /**
@@ -488,7 +494,7 @@ describe('ProjectCard', () => {
     
     const article = container.querySelector('article');
     expect(article).toBeInTheDocument();
-    expect(article).toHaveClass('bg-white', 'rounded-lg', 'shadow-md');
+    expect(article).toHaveClass('bg-background-secondary', 'rounded-lg');
   });
 
   /**

@@ -22,7 +22,7 @@ export interface WalletState {
   isConnected: boolean;
   address: string | null;
   network: 'mainnet' | 'testnet' | null;
-  balance: bigint | null;
+  balance: string | null; // Flow balance as string with 8 decimal precision
   isLoading: boolean;
   error: string | null;
 }
@@ -102,7 +102,7 @@ export function WalletProvider({
         }));
 
         // Load balance
-        service.getUSDCxBalance()
+        service.getFlowBalance()
           .then(balance => {
             setState(prev => ({
               ...prev,
@@ -151,7 +151,7 @@ export function WalletProvider({
 
       // Load balance after connection
       try {
-        const balance = await walletService.getUSDCxBalance();
+        const balance = await walletService.getFlowBalance();
         setState(prev => ({
           ...prev,
           balance,
@@ -197,9 +197,9 @@ export function WalletProvider({
   /**
    * Refresh wallet balance
    * 
-   * Fetches the latest USDCx balance from the blockchain.
+   * Fetches the latest Flow balance from the blockchain.
    * 
-   * Requirements: 1.3
+   * Requirements: 1.3, 2.3, 8.4
    */
   const refreshBalance = useCallback(async () => {
     if (!walletService || !state.isConnected) {
@@ -207,7 +207,7 @@ export function WalletProvider({
     }
 
     try {
-      const balance = await walletService.getUSDCxBalance();
+      const balance = await walletService.getFlowBalance();
       setState(prev => ({
         ...prev,
         balance,

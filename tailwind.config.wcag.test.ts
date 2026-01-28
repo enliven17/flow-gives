@@ -233,7 +233,7 @@ describe('Feature: platform-modernization, Property P1: WCAG Contrast Compliance
         },
         // Muted text on primary background
         {
-          text: '#737373',
+          text: '#8a8a8a',
           background: '#0a0a0a',
           name: 'muted text on primary background',
         },

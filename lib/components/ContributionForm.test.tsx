@@ -34,8 +34,8 @@ const mockContributionService = contributionService as jest.Mocked<typeof contri
 
 describe('ContributionForm', () => {
   const mockProjectId = 'test-project-123';
-  const mockFundraiserAddress = 'ST1X6Y2Z3A4B5C6D7E8F9G0H1I2J3K4L5M6N7O8P';
-  const mockWalletAddress = 'ST9X8Y7Z6A5B4C3D2E1F0G9H8I7J6K5L4M3N2O1P';
+  const mockFundraiserAddress = '0x1234567890abcdef';
+  const mockWalletAddress = '0xfedcba0987654321';
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -86,7 +86,7 @@ describe('ContributionForm', () => {
   });
 
   describe('Wallet connected', () => {
-    const mockBalance = 1000000000n; // 1000 USDCx in micro-USDCx
+    const mockBalance = '10.00000000'; // 10 FLOW
     const mockRefreshBalance = jest.fn();
 
     beforeEach(() => {
@@ -112,9 +112,9 @@ describe('ContributionForm', () => {
         />
       );
 
-      expect(screen.getByText(/your usdcx balance/i)).toBeInTheDocument();
-      // Balance is displayed without comma separator
-      expect(screen.getByText(/1000\.00 USDCx/i)).toBeInTheDocument();
+      expect(screen.getByText(/your flow balance/i)).toBeInTheDocument();
+      // Balance is displayed with 2 decimal places
+      expect(screen.getByText(/10\.00 FLOW/i)).toBeInTheDocument();
     });
 
     test('calls refreshBalance on mount', () => {
@@ -159,8 +159,92 @@ describe('ContributionForm', () => {
     });
   });
 
+  describe('Flow address validation', () => {
+    const mockBalance = '10.00000000'; // 10 FLOW
+    const validFlowAddress = '0x1234567890abcdef';
+    const invalidFlowAddress = 'invalid-address';
+
+    beforeEach(() => {
+      mockUseWallet.mockReturnValue({
+        isConnected: true,
+        address: mockWalletAddress,
+        balance: mockBalance,
+        network: 'testnet',
+        isLoading: false,
+        error: null,
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+        refreshBalance: jest.fn(),
+        walletService: null,
+      });
+    });
+
+    test('accepts valid Flow address format', () => {
+      render(
+        <ContributionForm
+          projectId={mockProjectId}
+          fundraiserAddress={validFlowAddress}
+        />
+      );
+
+      // Should not show address error
+      expect(screen.queryByText(/invalid flow address format/i)).not.toBeInTheDocument();
+    });
+
+    test('displays error for invalid Flow address format', () => {
+      render(
+        <ContributionForm
+          projectId={mockProjectId}
+          fundraiserAddress={invalidFlowAddress}
+        />
+      );
+
+      // Should show address error
+      expect(screen.getByText(/invalid address/i)).toBeInTheDocument();
+      expect(screen.getByText(/address must be 0x followed by 16 hexadecimal characters/i)).toBeInTheDocument();
+    });
+
+    test('disables form when address is invalid', () => {
+      render(
+        <ContributionForm
+          projectId={mockProjectId}
+          fundraiserAddress={invalidFlowAddress}
+        />
+      );
+
+      const amountInput = screen.getByLabelText(/contribution amount/i);
+      const submitButton = screen.getByRole('button', { name: /contribute to project/i });
+
+      expect(amountInput).toBeDisabled();
+      expect(submitButton).toBeDisabled();
+    });
+
+    test('validates address on address change', () => {
+      const { rerender } = render(
+        <ContributionForm
+          projectId={mockProjectId}
+          fundraiserAddress={validFlowAddress}
+        />
+      );
+
+      // Should not show error initially
+      expect(screen.queryByText(/invalid address/i)).not.toBeInTheDocument();
+
+      // Change to invalid address
+      rerender(
+        <ContributionForm
+          projectId={mockProjectId}
+          fundraiserAddress={invalidFlowAddress}
+        />
+      );
+
+      // Should show error after change
+      expect(screen.getByText(/invalid address/i)).toBeInTheDocument();
+    });
+  });
+
   describe('Amount validation', () => {
-    const mockBalance = 1000000000n; // 1000 USDCx
+    const mockBalance = '10.00000000'; // 10 FLOW
 
     beforeEach(() => {
       mockUseWallet.mockReturnValue({
@@ -265,11 +349,11 @@ describe('ContributionForm', () => {
       fireEvent.blur(amountInput);
 
       await waitFor(() => {
-        expect(screen.getByText('Amount must be at least 5 USDCx')).toBeInTheDocument();
+        expect(screen.getByText('Amount must be at least 5 FLOW')).toBeInTheDocument();
       });
     });
 
-    test('validates sufficient balance', async () => {
+    test('validates Flow token precision (8 decimal places)', async () => {
       render(
         <ContributionForm
           projectId={mockProjectId}
@@ -279,12 +363,51 @@ describe('ContributionForm', () => {
 
       const amountInput = screen.getByLabelText(/contribution amount/i);
       
-      // Try to contribute more than balance (1000 USDCx)
-      fireEvent.change(amountInput, { target: { value: '2000' } });
+      // Try to enter more than 8 decimal places
+      fireEvent.change(amountInput, { target: { value: '1.123456789' } });
       fireEvent.blur(amountInput);
 
       await waitFor(() => {
-        expect(screen.getByText(/insufficient balance/i)).toBeInTheDocument();
+        expect(screen.getByText('Flow tokens support a maximum of 8 decimal places')).toBeInTheDocument();
+      });
+    });
+
+    test('accepts valid Flow token with 8 decimal places', async () => {
+      render(
+        <ContributionForm
+          projectId={mockProjectId}
+          fundraiserAddress={mockFundraiserAddress}
+        />
+      );
+
+      const amountInput = screen.getByLabelText(/contribution amount/i);
+      
+      // Enter exactly 8 decimal places
+      fireEvent.change(amountInput, { target: { value: '1.12345678' } });
+      fireEvent.blur(amountInput);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/decimal places/i)).not.toBeInTheDocument();
+      });
+    });
+
+    test('validates sufficient balance with Flow-specific message', async () => {
+      render(
+        <ContributionForm
+          projectId={mockProjectId}
+          fundraiserAddress={mockFundraiserAddress}
+        />
+      );
+
+      const amountInput = screen.getByLabelText(/contribution amount/i);
+      
+      // Try to contribute more than balance (10 FLOW)
+      fireEvent.change(amountInput, { target: { value: '20' } });
+      fireEvent.blur(amountInput);
+
+      await waitFor(() => {
+        expect(screen.getByText(/insufficient flow balance/i)).toBeInTheDocument();
+        expect(screen.getByText(/10\.00000000 FLOW available/i)).toBeInTheDocument();
       });
     });
 
@@ -334,7 +457,7 @@ describe('ContributionForm', () => {
   });
 
   describe('Transaction flow', () => {
-    const mockBalance = 1000000000n; // 1000 USDCx
+    const mockBalance = '10.00000000'; // 10 FLOW
     const mockRefreshBalance = jest.fn();
     const mockOnSuccess = jest.fn();
     const mockOnError = jest.fn();

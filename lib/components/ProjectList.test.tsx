@@ -391,13 +391,13 @@ describe('ProjectList', () => {
 
     render(<ProjectList projects={projects} />);
 
-    expect(screen.getByText('Showing 3 projects')).toBeInTheDocument();
+    expect(screen.getByText('3 projects')).toBeInTheDocument();
 
     // Filter by active
     const filterSelect = screen.getByLabelText('Filter projects by status');
     fireEvent.change(filterSelect, { target: { value: ProjectStatus.ACTIVE } });
 
-    expect(screen.getByText('Showing 2 projects')).toBeInTheDocument();
+    expect(screen.getByText('2 projects')).toBeInTheDocument();
   });
 
   /**
@@ -411,7 +411,7 @@ describe('ProjectList', () => {
 
     render(<ProjectList projects={projects} />);
 
-    expect(screen.getByText('Showing 1 project')).toBeInTheDocument();
+    expect(screen.getByText('1 project')).toBeInTheDocument();
   });
 
   /**

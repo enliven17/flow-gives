@@ -18,7 +18,10 @@
     "storage:setup": "tsx scripts/setup-storage.ts",
     "add-image-column": "tsx scripts/add-image-column.ts",
     "add-images": "tsx scripts/add-image-column.ts && Invoke-RestMethod -Uri http://localhost:3001/api/projects/add-images -Method POST -ContentType application/json",
-    "deploy:contract": "tsx scripts/deploy-contract.ts"
+    "flow:deploy": "flow project deploy --network=testnet",
+    "flow:deploy:emulator": "flow project deploy --network=emulator",
+    "flow:test": "flow test",
+    "flow:emulator": "flow emulator start"
   },
   "dependencies": {
     "@onflow/fcl": "^1.12.2",

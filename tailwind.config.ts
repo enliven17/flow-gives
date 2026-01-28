@@ -18,7 +18,7 @@ const config: Config = {
         text: {
           primary: '#ffffff',      // Main text
           secondary: '#a3a3a3',    // Secondary text
-          muted: '#737373',        // Muted text
+          muted: '#8a8a8a',        // Muted text (lightened for WCAG AA compliance)
         },
         accent: {
           primary: '#10b981',      // Green accent (was blue)
