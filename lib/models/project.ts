@@ -36,6 +36,7 @@ export interface Project {
   deadline: Date;
   imageUrl?: string;
   category?: string;
+  contractId?: number; // Smart contract project ID (UInt64)
   createdAt: Date;
   updatedAt: Date;
   publishedAt?: Date;
@@ -106,6 +107,7 @@ export function createProject(data: {
   deadline: Date;
   imageUrl?: string;
   category?: string;
+  contractId?: number;
   createdAt: Date;
   updatedAt: Date;
   publishedAt?: Date;

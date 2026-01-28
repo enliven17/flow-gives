@@ -3,7 +3,7 @@
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7
  */
 
-import { supabaseAdmin } from '../supabase/server';
+import { supabase } from '../supabase/client';
 import * as fcl from '@onflow/fcl';
 
 export type TransactionType = 'create_project' | 'contribute' | 'withdraw' | 'refund';
@@ -30,7 +30,7 @@ export class TransactionService {
     walletAddress: string,
     projectId?: string
   ): Promise<Transaction> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('transactions')
       .insert({
         tx_id: txId,
@@ -51,7 +51,7 @@ export class TransactionService {
     status: TransactionStatus,
     errorMessage?: string
   ): Promise<void> {
-    const { error } = await (supabaseAdmin.from('transactions') as any)
+    const { error } = await (supabase.from('transactions') as any)
       .update({
         status,
         error_message: errorMessage,
@@ -173,7 +173,7 @@ export class TransactionService {
   }
 
   async getTransaction(txId: string): Promise<Transaction | null> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('transactions')
       .select('*')
       .eq('tx_id', txId)
@@ -184,7 +184,7 @@ export class TransactionService {
   }
 
   async getTransactionsByWallet(walletAddress: string): Promise<Transaction[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('transactions')
       .select('*')
       .eq('wallet_address', walletAddress)
@@ -195,7 +195,7 @@ export class TransactionService {
   }
 
   async getTransactionsByProject(projectId: string): Promise<Transaction[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('transactions')
       .select('*')
       .eq('project_id', projectId)

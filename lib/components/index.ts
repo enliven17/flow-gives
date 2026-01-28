@@ -31,6 +31,9 @@ export { MobileMenu } from './MobileMenu';
 export { Navbar } from './Navbar';
 export type { NavbarProps } from './Navbar';
 
+export { ProjectStats } from './ProjectStats';
+export type { ProjectStatsProps } from './ProjectStats';
+
 export { ImageUpload } from './ImageUpload';
 export type { ImageUploadProps } from './ImageUpload';
 

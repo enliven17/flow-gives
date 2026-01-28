@@ -87,6 +87,7 @@ export class ProjectRepository {
       deadline: new Date(row.deadline),
       imageUrl: rowAny.image_url || undefined,
       category: rowAny.category || undefined,
+      contractId: rowAny.contract_id || undefined,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
       publishedAt: rowAny.published_at ? new Date(rowAny.published_at) : undefined,
@@ -226,6 +227,8 @@ export class ProjectRepository {
    */
   async findById(id: string): Promise<Project | null> {
     const supabaseAdmin = getSupabaseAdmin();
+    
+    // Fetch project data
     const { data: row, error } = await supabaseAdmin
       .from('projects')
       .select('*')
@@ -240,7 +243,28 @@ export class ProjectRepository {
       throw new Error(`Failed to find project: ${error.message}`);
     }
 
-    return this.rowToProject(row);
+    // Fetch contributor count from contributions table
+    const { data: contributions, error: contribError } = await supabaseAdmin
+      .from('contributions')
+      .select('contributor_address')
+      .eq('project_id', id);
+
+    if (contribError) {
+      console.error('Failed to fetch contributor count:', contribError);
+    }
+
+    // Calculate unique contributor count
+    const uniqueContributors = contributions 
+      ? new Set(contributions.map(c => c.contributor_address)).size 
+      : 0;
+
+    // Add contributor count to row data
+    const rowWithCount = {
+      ...row,
+      contributor_count: uniqueContributors
+    };
+
+    return this.rowToProject(rowWithCount);
   }
 
   /**
@@ -305,7 +329,39 @@ export class ProjectRepository {
       return [];
     }
 
-    return rows.map((row: ProjectRow) => this.rowToProject(row));
+    // Fetch contributor counts for all projects
+    const projectIds = rows.map((row: ProjectRow) => row.id);
+    const { data: contributions, error: contribError } = await supabaseAdmin
+      .from('contributions')
+      .select('project_id, contributor_address')
+      .in('project_id', projectIds);
+
+    if (contribError) {
+      console.error('Failed to fetch contributor counts:', contribError);
+    }
+
+    // Calculate contributor counts per project
+    const contributorCounts = new Map<string, number>();
+    if (contributions) {
+      const contributorsByProject = new Map<string, Set<string>>();
+      contributions.forEach(c => {
+        if (!contributorsByProject.has(c.project_id)) {
+          contributorsByProject.set(c.project_id, new Set());
+        }
+        contributorsByProject.get(c.project_id)!.add(c.contributor_address);
+      });
+      contributorsByProject.forEach((contributors, projectId) => {
+        contributorCounts.set(projectId, contributors.size);
+      });
+    }
+
+    // Add contributor counts to rows
+    const rowsWithCounts = rows.map((row: ProjectRow) => ({
+      ...row,
+      contributor_count: contributorCounts.get(row.id) || 0
+    }));
+
+    return rowsWithCounts.map((row: ProjectRow) => this.rowToProject(row));
   }
 
   /**

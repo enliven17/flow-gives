@@ -21,13 +21,18 @@ export function MobileMenu({ isOpen, onClose, showWallet = false }: MobileMenuPr
         onClick={onClose}
         aria-hidden="true"
       />
-      
+
       {/* Menu */}
       <div className="fixed top-0 right-0 h-full w-64 bg-background-secondary border-l border-border-default z-50 md:hidden transform transition-transform duration-300 ease-in-out">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex justify-between items-center p-4 border-b border-border-default">
-            <span className="text-xl font-bold text-text-primary">Menu</span>
+            <Link href="/" onClick={onClose} className="hover:opacity-90 transition-opacity">
+              <span className="text-xl font-bold tracking-tight">
+                <span className="text-white">Flow</span>
+                <span className="logo-gradient">Gives</span>
+              </span>
+            </Link>
             <button
               onClick={onClose}
               className="p-2 text-text-secondary hover:text-text-primary transition-colors"
@@ -38,7 +43,7 @@ export function MobileMenu({ isOpen, onClose, showWallet = false }: MobileMenuPr
               </svg>
             </button>
           </div>
-          
+
           {/* Wallet Section */}
           {showWallet && (
             <div className="p-4 border-b border-border-default bg-background-tertiary/30">
@@ -46,7 +51,7 @@ export function MobileMenu({ isOpen, onClose, showWallet = false }: MobileMenuPr
               <WalletConnectButton className="w-full" />
             </div>
           )}
-          
+
           {/* Navigation Links */}
           <nav className="flex flex-col p-4 gap-2 flex-1 overflow-y-auto">
             <Link

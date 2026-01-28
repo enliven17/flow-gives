@@ -6,6 +6,7 @@ import { Navbar } from '@/lib/components/Navbar';
 import { WalletProvider } from '@/lib/contexts/wallet.context';
 import { ContributionForm } from '@/lib/components/ContributionForm';
 import { CommentSection } from '@/lib/components/CommentSection';
+import { ProjectStats } from '@/lib/components/ProjectStats';
 import { Footer } from '@/lib/components/Footer';
 import { Project, Contribution } from '@/lib/models/project';
 import { formatFlow, formatWalletAddress, calculateFundingPercentage, calculateTimeRemaining } from '@/lib/utils/format';
@@ -65,6 +66,13 @@ function ProjectDetailContent() {
             createdAt: new Date(contrib.createdAt),
           }));
           setContributions(contributionsWithTypes);
+          
+          // Update project with actual contributor count
+          const uniqueContributors = new Set(contributionsWithTypes.map((c: any) => c.contributorAddress));
+          setProject(prev => prev ? {
+            ...prev,
+            contributorCount: uniqueContributors.size,
+          } : null);
         }
       } catch (err) {
         console.error('Failed to fetch contributions:', err);
@@ -180,11 +188,23 @@ function ProjectDetailContent() {
           createdAt: new Date(contrib.createdAt),
         }));
         setContributions(contributionsWithTypes);
+        
+        // Update project with actual contributor count
+        if (projectRes.ok) {
+          const projectData = await projectRes.json();
+          const uniqueContributors = new Set(contributionsWithTypes.map((c: any) => c.contributorAddress));
+          setProject(prev => prev ? {
+            ...prev,
+            contributorCount: uniqueContributors.size,
+          } : null);
+        }
       }
     } catch (err) {
       console.error('Failed to refresh data:', err);
     }
   };
+
+  const isActive = project?.status === 'active';
 
   if (loading) {
     return (
@@ -219,7 +239,6 @@ function ProjectDetailContent() {
 
   const percentFunded = calculateFundingPercentage(project.totalRaised, project.fundingGoal);
   const timeRemaining = calculateTimeRemaining(project.deadline);
-  const isActive = project.status === 'active';
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in">
@@ -278,60 +297,15 @@ function ProjectDetailContent() {
               </div>
             </div>
 
-            <div className="prose prose-invert max-w-none">
+            <div className="prose prose-invert max-w-none mb-6">
               <p className="text-base sm:text-lg text-text-secondary whitespace-pre-wrap leading-relaxed">
                 {project.description}
               </p>
             </div>
 
-            {/* Funding Metrics */}
+            {/* Project Statistics */}
             <div className="border-t border-border-default pt-6">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-accent-primary/10 to-accent-primary/5 border border-accent-primary/20">
-                  <p className="text-xs text-text-muted mb-2">Raised</p>
-                  <p className="text-2xl sm:text-3xl font-black text-accent-primary">
-                    {formatFlow(project.totalRaised)}
-                  </p>
-                  <p className="text-xs text-text-muted mt-1">FLOW</p>
-                </div>
-                <div className="text-center p-4 rounded-xl bg-background-tertiary/50 border border-border-default">
-                  <p className="text-xs text-text-muted mb-2">Goal</p>
-                  <p className="text-2xl sm:text-3xl font-black text-text-primary">
-                    {formatFlow(project.fundingGoal)}
-                  </p>
-                  <p className="text-xs text-text-muted mt-1">FLOW</p>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="relative mb-4">
-                <div className="w-full bg-background-tertiary rounded-full h-5 overflow-hidden shadow-inner">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-accent-primary via-accent-success to-accent-primary transition-all duration-1000 ease-out shadow-lg"
-                    style={{ width: `${Math.min(percentFunded, 100)}%` }}
-                  >
-                  </div>
-                </div>
-                <div className="flex justify-between items-center mt-3">
-                  <p className="text-sm font-bold text-text-primary">
-                    {percentFunded.toFixed(1)}% funded
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-text-secondary">
-                    <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      {project.contributorCount} contributors
-                    </span>
-                    <span className={`flex items-center gap-1 ${timeRemaining > 0 ? 'text-accent-success' : 'text-accent-error'}`}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {timeRemaining > 0 ? `${Math.ceil(timeRemaining / (1000 * 60 * 60 * 24))} days left` : 'Ended'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <ProjectStats project={project} />
             </div>
           </div>
 
@@ -344,6 +318,7 @@ function ProjectDetailContent() {
               </h2>
               <ContributionForm
                 projectId={projectId}
+                contractId={project.contractId || 1}
                 fundraiserAddress={project.fundraiserAddress}
                 onSuccess={refreshData}
               />

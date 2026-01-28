@@ -14,24 +14,41 @@ import * as fcl from "@onflow/fcl";
  * typically in the root layout or app component.
  */
 export function configureFCL() {
+  const accessNode = process.env.NEXT_PUBLIC_FLOW_ACCESS_NODE || "https://rest-testnet.onflow.org";
+  const walletDiscovery = process.env.NEXT_PUBLIC_FLOW_WALLET_DISCOVERY || "https://fcl-discovery.onflow.org/testnet/authn";
+  const contractAddress = process.env.NEXT_PUBLIC_CROWDFUNDING_CONTRACT_ADDRESS || "0x0ee0a7ac3ca6d12c";
+  const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
+
+  console.log('Configuring FCL with:', {
+    accessNode,
+    walletDiscovery,
+    contractAddress,
+    hasWalletConnectId: !!walletConnectProjectId,
+  });
+
   fcl.config({
     // Application details shown in wallet connection UI
     "app.detail.title": "FlowGives",
     "app.detail.icon": "https://flowgives.com/logo.png",
     
     // Flow testnet access node for blockchain queries and transactions
-    "accessNode.api": process.env.NEXT_PUBLIC_FLOW_ACCESS_NODE || "https://rest-testnet.onflow.org",
+    "accessNode.api": accessNode,
     
     // Wallet discovery endpoint for connecting to Flow wallets (Blocto, Lilico, etc.)
-    "discovery.wallet": process.env.NEXT_PUBLIC_FLOW_WALLET_DISCOVERY || "https://fcl-discovery.onflow.org/testnet/authn",
+    "discovery.wallet": walletDiscovery,
+    
+    // WalletConnect Project ID (optional but recommended)
+    ...(walletConnectProjectId && { "discovery.wallet.method": "POP/RPC", "walletconnect.projectId": walletConnectProjectId }),
     
     // Contract address aliases for easy reference in transactions and scripts
-    "0xCrowdfunding": process.env.NEXT_PUBLIC_CROWDFUNDING_CONTRACT_ADDRESS || "",
+    "0xCrowdfunding": contractAddress,
     
     // Flow token contract addresses (standard Flow contracts)
     "0xFlowToken": "0x7e60df042a9c0868", // Flow token contract on testnet
     "0xFungibleToken": "0x9a0766d93b6608b7", // Fungible token standard on testnet
   });
+
+  console.log('FCL configured successfully');
 }
 
 /**

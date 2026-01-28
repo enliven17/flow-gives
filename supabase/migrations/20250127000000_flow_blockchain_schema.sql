@@ -284,3 +284,78 @@ COMMENT ON VIEW project_stats IS 'Aggregated statistics for projects including c
 -- Grant permissions for the view
 GRANT SELECT ON project_stats TO anon;
 GRANT SELECT ON project_stats TO authenticated;
+
+
+-- Create comments table
+-- Stores project comments and discussions
+CREATE TABLE comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL,
+  author_address TEXT NOT NULL,
+  content TEXT NOT NULL CHECK (char_length(content) > 0 AND char_length(content) <= 2000),
+  parent_id UUID,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT fk_comment_project FOREIGN KEY (project_id) 
+    REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT fk_comment_author FOREIGN KEY (author_address) 
+    REFERENCES users(wallet_address) ON DELETE CASCADE,
+  CONSTRAINT fk_comment_parent FOREIGN KEY (parent_id) 
+    REFERENCES comments(id) ON DELETE CASCADE
+);
+
+-- Comments indexes
+CREATE INDEX idx_comments_project_id ON comments(project_id);
+CREATE INDEX idx_comments_author_address ON comments(author_address);
+CREATE INDEX idx_comments_parent_id ON comments(parent_id);
+CREATE INDEX idx_comments_created_at ON comments(created_at DESC);
+
+-- Enable RLS for comments
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for comments table
+-- Anyone can read comments
+CREATE POLICY "Comments are viewable by everyone"
+  ON comments FOR SELECT
+  USING (true);
+
+-- Authenticated users can create comments
+CREATE POLICY "Anyone can create comments"
+  ON comments FOR INSERT
+  WITH CHECK (true);
+
+-- Authors can update their own comments
+CREATE POLICY "Authors can update their own comments"
+  ON comments FOR UPDATE
+  USING (author_address = current_setting('request.jwt.claims', true)::json->>'wallet_address');
+
+-- Authors can delete their own comments
+CREATE POLICY "Authors can delete their own comments"
+  ON comments FOR DELETE
+  USING (author_address = current_setting('request.jwt.claims', true)::json->>'wallet_address');
+
+
+-- Function to update project metrics when contributions change
+CREATE OR REPLACE FUNCTION update_project_metrics()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Update project's current_amount and contributor count
+  UPDATE projects
+  SET 
+    current_amount = (
+      SELECT COALESCE(SUM(amount), 0)
+      FROM contributions
+      WHERE project_id = NEW.project_id
+    ),
+    updated_at = NOW()
+  WHERE id = NEW.project_id;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to update project metrics after contribution insert
+CREATE TRIGGER trigger_update_project_metrics_on_contribution
+AFTER INSERT ON contributions
+FOR EACH ROW
+EXECUTE FUNCTION update_project_metrics();
