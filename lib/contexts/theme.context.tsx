@@ -59,7 +59,7 @@ export interface ThemeProviderProps {
 export function ThemeProvider({ 
   children, 
   defaultTheme = 'dark',
-  storageKey = 'stacksgives-theme'
+  storageKey = 'flowgives-theme'
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(defaultTheme);
   const [mounted, setMounted] = useState(false);

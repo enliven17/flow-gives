@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "StacksGives - Crowdfunding on Stacks",
-  description: "Transparent and efficient crowdfunding platform built on the Stacks blockchain",
+  title: "FlowGives - Crowdfunding on Flow",
+  description: "Transparent and efficient crowdfunding platform built on the Flow blockchain",
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "StacksGives",
+    title: "FlowGives",
   },
   formatDetection: {
     telephone: false,
@@ -35,7 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

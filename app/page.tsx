@@ -13,7 +13,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <WalletProvider appName="StacksGives">
+    <WalletProvider appName="FlowGives">
       <main className="min-h-screen relative">
         {/* Header */}
         <header className="bg-background-secondary/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border-default">

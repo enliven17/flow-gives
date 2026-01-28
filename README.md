@@ -1,6 +1,6 @@
-# StacksGives
+# FlowGives
 
-A decentralized crowdfunding platform built on the Stacks blockchain, enabling projects to raise capital using USDCx tokens with transparent, on-chain transactions.
+A decentralized crowdfunding platform built on the Flow blockchain, enabling projects to raise capital using Flow tokens with transparent, on-chain transactions.
 
 ## Architecture
 
