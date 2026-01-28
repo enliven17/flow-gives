@@ -1,6 +1,6 @@
 # FlowGives
 
-A decentralized crowdfunding platform built on the Flow blockchain, enabling projects to raise capital using Flow tokens with transparent, on-chain transactions.
+A decentralized crowdfunding platform built on the Flow blockchain, enabling projects to raise capital using FLOW tokens with transparent, on-chain transactions.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ A decentralized crowdfunding platform built on the Flow blockchain, enabling pro
 graph TB
     subgraph "Client Layer"
         UI[Next.js Frontend]
-        Wallet[Stacks Wallet]
+        Wallet[Flow Wallet]
     end
     
     subgraph "Application Layer"
@@ -25,22 +25,22 @@ graph TB
     end
     
     subgraph "Blockchain Layer"
-        Stacks[Stacks Blockchain]
-        USDCx[USDCx Token Contract]
+        Flow[Flow Blockchain]
+        FlowToken[FLOW Token]
         Contract[Crowdfunding Contract]
     end
     
     UI --> Wallet
     UI --> API
-    Wallet --> Stacks
+    Wallet --> Flow
     API --> Services
     Services --> Repos
-    Services --> Stacks
+    Services --> Flow
     Repos --> DB
     DB --> Cache
     Cache --> UI
-    Stacks --> USDCx
-    Stacks --> Contract
+    Flow --> FlowToken
+    Flow --> Contract
 ```
 
 ### Component Architecture
@@ -67,7 +67,7 @@ graph LR
     
     subgraph "External Services"
         SupabaseClient[Supabase Client]
-        StacksConnect[Stacks Connect]
+        FCL[Flow Client Library]
     end
     
     Pages --> Forms
@@ -79,8 +79,8 @@ graph LR
     ContributionService --> ContributionRepo
     ProjectRepo --> SupabaseClient
     ContributionRepo --> SupabaseClient
-    WalletService --> StacksConnect
-    TransactionService --> StacksConnect
+    WalletService --> FCL
+    TransactionService --> FCL
 ```
 
 ## Transaction Flow
@@ -125,15 +125,22 @@ sequenceDiagram
 
 ### Post Condition Structure
 
-Post conditions ensure transaction safety by specifying expected outcomes:
+Flow transactions use authorizers and payers to ensure transaction safety:
 
-```typescript
-Pc.principal(senderAddress)
-  .willSendEq(amount.toString())
-  .ft(usdcxContract, 'usdcx-token')
+```cadence
+transaction(projectId: UInt64, amount: UFix64) {
+    prepare(signer: AuthAccount) {
+        // Signer authorizes the transaction
+        // Flow vault is accessed securely
+    }
+    execute {
+        // Transaction logic executes
+        // Contribution is recorded on-chain
+    }
+}
 ```
 
-This post condition verifies that the sender transfers exactly the specified amount of USDCx tokens, or the transaction aborts.
+This structure ensures that only the authorized account can execute the transaction.
 
 ## Database Schema
 
@@ -209,14 +216,13 @@ graph TD
     ProjectService --> ProjectRepository
     
     TransactionService --> WalletService
-    TransactionService --> StacksNetwork
+    TransactionService --> FlowNetwork
     
-    WalletService --> StacksConnect
-    WalletService --> USDCxService
+    WalletService --> FCL
+    WalletService --> FlowNetwork
     
-    USDCxService --> StacksNetwork
-    ContractService --> StacksNetwork
-    SyncService --> StacksNetwork
+    ContractService --> FlowNetwork
+    SyncService --> FlowNetwork
     SyncService --> ContributionRepository
 ```
 
@@ -224,23 +230,20 @@ graph TD
 
 ```mermaid
 graph LR
-    A[createTransferTransaction] --> B[Build Function Args]
-    B --> C[uintCV amount]
-    B --> D[principalCV sender]
-    B --> E[principalCV recipient]
-    B --> F[noneCV memo]
+    A[contribute] --> B[Build Transaction Args]
+    B --> C[arg projectId UInt64]
+    B --> D[arg amount UFix64]
     
-    G[signAndBroadcast] --> H[Create Post Conditions]
-    H --> I[Pc.principal.willSendEq.ft]
-    I --> J[openContractCall]
-    J --> K[Wallet Signature]
-    K --> L[Broadcast to Blockchain]
+    E[fcl.mutate] --> F[Sign with Wallet]
+    F --> G[User Approval]
+    G --> H[Broadcast to Flow]
+    H --> I[Transaction Sealed]
     
-    M[waitForConfirmation] --> N[Poll Stacks API]
-    N --> O{Status Check}
-    O -->|Pending| N
-    O -->|Confirmed| P[Return Status]
-    O -->|Failed| Q[Throw Error]
+    J[fcl.tx] --> K[Poll Transaction Status]
+    K --> L{Status Check}
+    L -->|Pending| K
+    L -->|Sealed| M[Return TxID]
+    L -->|Failed| N[Throw Error]
 ```
 
 ## Data Flow
@@ -297,10 +300,10 @@ flowchart TD
 - **Real-time**: Supabase Realtime Subscriptions
 
 ### Blockchain
-- **Network**: Stacks Blockchain (Testnet/Mainnet)
-- **Token**: USDCx (SIP-010 fungible token)
-- **Wallet Integration**: @stacks/connect
-- **Smart Contracts**: Clarity
+- **Network**: Flow Blockchain (Testnet/Mainnet)
+- **Token**: FLOW (Native token)
+- **Wallet Integration**: @onflow/fcl (Flow Client Library)
+- **Smart Contracts**: Cadence
 
 ### Development Tools
 - **Package Manager**: npm
@@ -312,7 +315,7 @@ flowchart TD
 ## Project Structure
 
 ```
-stacks-gives/
+flowgives/
 ├── app/                      # Next.js app directory
 │   ├── api/                  # API routes
 │   │   ├── projects/         # Project endpoints
@@ -328,32 +331,37 @@ stacks-gives/
 │   ├── repositories/        # Data access layer
 │   ├── models/              # Domain models
 │   ├── utils/               # Utility functions
+│   ├── config/              # FCL configuration
 │   └── supabase/            # Supabase clients
-├── contracts/               # Clarity smart contracts
-│   ├── crowdfunding.clar    # Main contract
-│   └── crowdfunding.test.ts # Contract tests
-├── supabase/                # Database migrations
-│   └── migrations/          # SQL migration files
-└── scripts/                 # Utility scripts
+├── contracts/               # Cadence smart contracts
+│   ├── Crowdfunding.cdc     # Main contract
+│   └── scripts/             # Query scripts
+└── supabase/                # Database migrations
+    └── migrations/          # SQL migration files
 ```
 
 ## Key Services
 
 ### TransactionService
 
-Handles USDCx transfer transactions with post conditions for safety.
+Handles FLOW token transfer transactions with proper authorization.
 
 **Key Methods:**
-- `createTransferTransaction()`: Constructs unsigned transaction
-- `signAndBroadcast()`: Opens wallet for signing and broadcasts
-- `waitForConfirmation()`: Polls for transaction confirmation
-- `getTransaction()`: Retrieves transaction details
+- `contribute()`: Creates and executes contribution transaction
+- `withdraw()`: Allows project creators to withdraw funds
+- `refund()`: Processes refunds for failed projects
+- `getTransaction()`: Retrieves transaction details from Flow blockchain
 
-**Post Condition Format:**
+**Transaction Format:**
 ```typescript
-Pc.principal(senderAddress)
-  .willSendEq(amount.toString())
-  .ft(usdcxContract, 'usdcx-token')
+fcl.mutate({
+  cadence: CONTRIBUTE_TRANSACTION,
+  args: (arg, t) => [
+    arg(projectId, t.UInt64),
+    arg(amount, t.UFix64)
+  ],
+  limit: 9999
+})
 ```
 
 ### ContributionService
@@ -379,11 +387,11 @@ Manages project lifecycle and business rules.
 
 ### WalletService
 
-Manages Stacks wallet connections and USDCx balance queries.
+Manages Flow wallet connections and FLOW balance queries.
 
 **Features:**
-- Multi-wallet support (Hiro, Xverse)
-- Connection state management
+- Multi-wallet support (Blocto, Lilico, Dapper)
+- Connection state management via FCL
 - Balance queries with caching
 - Network switching (testnet/mainnet)
 
@@ -435,10 +443,10 @@ Manages Stacks wallet connections and USDCx balance queries.
 
 ### Post Conditions
 
-All USDCx transfers include post conditions to prevent:
+All FLOW transfers use Cadence's built-in authorization to prevent:
 - Unexpected token transfers
 - Amount discrepancies
-- Unauthorized transfers
+- Unauthorized access to vaults
 
 ### Input Validation
 
@@ -470,7 +478,7 @@ All USDCx transfers include post conditions to prevent:
 - Node.js 18+
 - npm or yarn
 - Supabase account
-- Stacks wallet (for testing)
+- Flow wallet (Blocto, Lilico, or Dapper for testing)
 
 ### Setup
 
@@ -495,7 +503,9 @@ npm run dev
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-NEXT_PUBLIC_STACKS_NETWORK=testnet
+NEXT_PUBLIC_FLOW_NETWORK=testnet
+NEXT_PUBLIC_FLOW_ACCESS_NODE=https://rest-testnet.onflow.org
+NEXT_PUBLIC_FLOW_DISCOVERY_WALLET=https://fcl-discovery.onflow.org/testnet/authn
 ```
 
 ### Available Scripts
@@ -532,10 +542,10 @@ supabase migration list
 
 ```bash
 # Deploy contract to testnet
-npm run deploy:contract
+flow project deploy --network=testnet
 
 # Verify contract
-npm run deploy:contract:check
+flow scripts execute contracts/scripts/verify_deployment.cdc --network=testnet
 ```
 
 ## API Reference
@@ -573,7 +583,8 @@ npm run deploy:contract:check
 
 ## References
 
-- [Stacks Documentation](https://docs.stacks.co/)
+- [Flow Documentation](https://developers.flow.com/)
+- [Cadence Language Reference](https://cadence-lang.org/)
+- [FCL (Flow Client Library)](https://developers.flow.com/tools/clients/fcl-js)
 - [Supabase Documentation](https://supabase.com/docs)
 - [Next.js Documentation](https://nextjs.org/docs)
-- [Clarity Language Reference](https://docs.stacks.co/clarity)

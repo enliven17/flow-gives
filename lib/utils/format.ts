@@ -20,6 +20,7 @@
  * calculateFundingPercentage(50000000n, 100000000n) // Returns 50
  * calculateFundingPercentage(150000000n, 100000000n) // Returns 150 (overfunded)
  * calculateFundingPercentage(0n, 100000000n) // Returns 0
+ * calculateFundingPercentage(400000000n, 100000000000n) // Returns 0.4 (4 FLOW / 1000 FLOW)
  * 
  * Requirements: 4.3
  */
@@ -31,10 +32,14 @@ export function calculateFundingPercentage(
     return 0;
   }
   
-  // Calculate percentage using bigint arithmetic to avoid precision loss
-  // Then convert to number for display
-  const percentage = (totalRaised * 100n) / fundingGoal;
-  return Number(percentage);
+  // Convert to numbers for precise decimal calculation
+  // This is safe because Flow amounts are within JavaScript's safe integer range
+  const raised = Number(totalRaised);
+  const goal = Number(fundingGoal);
+  
+  // Calculate percentage with decimal precision
+  const percentage = (raised / goal) * 100;
+  return percentage;
 }
 
 /**
