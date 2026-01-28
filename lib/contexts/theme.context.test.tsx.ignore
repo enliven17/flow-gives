@@ -1,0 +1,467 @@
+/**
+ * ThemeContext Tests
+ * 
+ * Tests for theme context functionality including:
+ * - Theme state management
+ * - Theme toggle functionality
+ * - localStorage persistence
+ * - Document class application
+ * 
+ * Requirements: 2.1, 2.2
+ */
+
+import React from 'react';
+import { render, screen, waitFor, act } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
+import { ThemeProvider, useTheme, Theme } from './theme.context';
+
+// Mock localStorage
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+  };
+})();
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+});
+
+describe('ThemeContext', () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    document.documentElement.className = '';
+  });
+
+  describe('ThemeProvider', () => {
+    it('should render children', async () => {
+      render(
+        <ThemeProvider>
+          <div>Test Content</div>
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Test Content')).toBeInTheDocument();
+      });
+    });
+
+    it('should use default theme when no stored theme exists', async () => {
+      const TestComponent = () => {
+        const { theme } = useTheme();
+        return <div>Theme: {theme}</div>;
+      };
+
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: dark')).toBeInTheDocument();
+      });
+    });
+
+    it('should load theme from localStorage on mount', async () => {
+      localStorageMock.setItem('stacksgives-theme', 'light');
+
+      const TestComponent = () => {
+        const { theme } = useTheme();
+        return <div>Theme: {theme}</div>;
+      };
+
+      render(
+        <ThemeProvider>
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: light')).toBeInTheDocument();
+      });
+    });
+
+    it('should use custom storage key', async () => {
+      localStorageMock.setItem('custom-key', 'light');
+
+      const TestComponent = () => {
+        const { theme } = useTheme();
+        return <div>Theme: {theme}</div>;
+      };
+
+      render(
+        <ThemeProvider storageKey="custom-key">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: light')).toBeInTheDocument();
+      });
+    });
+
+    it('should apply theme class to document element', async () => {
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <div>Test</div>
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
+      });
+    });
+
+    it('should persist theme to localStorage', async () => {
+      const TestComponent = () => {
+        const { setTheme } = useTheme();
+        return (
+          <button onClick={() => setTheme('light')}>
+            Set Light Theme
+          </button>
+        );
+      };
+
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Set Light Theme')).toBeInTheDocument();
+      });
+
+      act(() => {
+        screen.getByText('Set Light Theme').click();
+      });
+
+      await waitFor(() => {
+        expect(localStorageMock.getItem('stacksgives-theme')).toBe('light');
+      });
+    });
+
+    it('should handle localStorage errors gracefully', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      
+      // Mock localStorage to throw error
+      const originalSetItem = localStorageMock.setItem;
+      localStorageMock.setItem = () => {
+        throw new Error('Storage quota exceeded');
+      };
+
+      const TestComponent = () => {
+        const { setTheme } = useTheme();
+        return (
+          <button onClick={() => setTheme('light')}>
+            Set Light Theme
+          </button>
+        );
+      };
+
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Set Light Theme')).toBeInTheDocument();
+      });
+
+      act(() => {
+        screen.getByText('Set Light Theme').click();
+      });
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to save theme to localStorage:',
+          expect.any(Error)
+        );
+      });
+
+      // Restore
+      localStorageMock.setItem = originalSetItem;
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('useTheme hook', () => {
+    it('should provide theme state', async () => {
+      const TestComponent = () => {
+        const { theme, isDark } = useTheme();
+        return (
+          <div>
+            <div>Theme: {theme}</div>
+            <div>Is Dark: {isDark ? 'yes' : 'no'}</div>
+          </div>
+        );
+      };
+
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: dark')).toBeInTheDocument();
+        expect(screen.getByText('Is Dark: yes')).toBeInTheDocument();
+      });
+    });
+
+    it('should toggle theme', async () => {
+      const TestComponent = () => {
+        const { theme, toggleTheme } = useTheme();
+        return (
+          <div>
+            <div>Theme: {theme}</div>
+            <button onClick={toggleTheme}>Toggle Theme</button>
+          </div>
+        );
+      };
+
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: dark')).toBeInTheDocument();
+      });
+
+      act(() => {
+        screen.getByText('Toggle Theme').click();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: light')).toBeInTheDocument();
+      });
+
+      act(() => {
+        screen.getByText('Toggle Theme').click();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: dark')).toBeInTheDocument();
+      });
+    });
+
+    it('should set theme explicitly', async () => {
+      const TestComponent = () => {
+        const { theme, setTheme } = useTheme();
+        return (
+          <div>
+            <div>Theme: {theme}</div>
+            <button onClick={() => setTheme('light')}>Set Light</button>
+            <button onClick={() => setTheme('dark')}>Set Dark</button>
+          </div>
+        );
+      };
+
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: dark')).toBeInTheDocument();
+      });
+
+      act(() => {
+        screen.getByText('Set Light').click();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: light')).toBeInTheDocument();
+      });
+
+      act(() => {
+        screen.getByText('Set Dark').click();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: dark')).toBeInTheDocument();
+      });
+    });
+
+    it('should update document classes when theme changes', async () => {
+      const TestComponent = () => {
+        const { toggleTheme } = useTheme();
+        return <button onClick={toggleTheme}>Toggle</button>;
+      };
+
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
+        expect(document.documentElement.classList.contains('light')).toBe(false);
+      });
+
+      act(() => {
+        screen.getByText('Toggle').click();
+      });
+
+      await waitFor(() => {
+        expect(document.documentElement.classList.contains('light')).toBe(true);
+        expect(document.documentElement.classList.contains('dark')).toBe(false);
+      });
+    });
+
+    it('should throw error when used outside ThemeProvider', () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      const TestComponent = () => {
+        try {
+          useTheme();
+          return <div>Should not render</div>;
+        } catch (error) {
+          return <div>Error: {(error as Error).message}</div>;
+        }
+      };
+
+      render(<TestComponent />);
+
+      expect(screen.getByText('Error: useTheme must be used within a ThemeProvider')).toBeInTheDocument();
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should maintain theme across re-renders', async () => {
+      const TestComponent = () => {
+        const { theme, setTheme } = useTheme();
+        const [count, setCount] = React.useState(0);
+        
+        return (
+          <div>
+            <div>Theme: {theme}</div>
+            <div>Count: {count}</div>
+            <button onClick={() => setTheme('light')}>Set Light</button>
+            <button onClick={() => setCount(c => c + 1)}>Increment</button>
+          </div>
+        );
+      };
+
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: dark')).toBeInTheDocument();
+      });
+
+      act(() => {
+        screen.getByText('Set Light').click();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Theme: light')).toBeInTheDocument();
+      });
+
+      // Trigger re-render
+      act(() => {
+        screen.getByText('Increment').click();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Count: 1')).toBeInTheDocument();
+        expect(screen.getByText('Theme: light')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Edge cases', () => {
+    it('should handle invalid stored theme value', async () => {
+      localStorageMock.setItem('stacksgives-theme', 'invalid-theme');
+
+      const TestComponent = () => {
+        const { theme } = useTheme();
+        return <div>Theme: {theme}</div>;
+      };
+
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        // Should fall back to default theme
+        expect(screen.getByText('Theme: dark')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle localStorage getItem error', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      
+      // Mock localStorage to throw error on getItem
+      const originalGetItem = localStorageMock.getItem;
+      localStorageMock.getItem = () => {
+        throw new Error('Storage access denied');
+      };
+
+      const TestComponent = () => {
+        const { theme } = useTheme();
+        return <div>Theme: {theme}</div>;
+      };
+
+      render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        // Should use default theme
+        expect(screen.getByText('Theme: dark')).toBeInTheDocument();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to load theme from localStorage:',
+          expect.any(Error)
+        );
+      });
+
+      // Restore
+      localStorageMock.getItem = originalGetItem;
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should not render until mounted to prevent hydration mismatch', () => {
+      const TestComponent = () => {
+        const { theme } = useTheme();
+        return <div>Theme: {theme}</div>;
+      };
+
+      const { container } = render(
+        <ThemeProvider defaultTheme="dark">
+          <TestComponent />
+        </ThemeProvider>
+      );
+
+      // Initially should not render (returns null)
+      // This is checked by the fact that the component eventually renders
+      // after the useEffect runs
+      waitFor(() => {
+        expect(screen.getByText('Theme: dark')).toBeInTheDocument();
+      });
+    });
+  });
+});

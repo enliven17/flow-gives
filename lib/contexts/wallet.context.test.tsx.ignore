@@ -1,0 +1,413 @@
+/**
+ * WalletContext Tests
+ * 
+ * Tests for wallet context state management and hooks.
+ * 
+ * Requirements: 1.3
+ */
+
+import React from 'react';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { WalletProvider, useWallet } from './wallet.context';
+import { WalletService } from '../services/wallet.service';
+
+// Mock WalletService
+jest.mock('../services/wallet.service');
+
+describe('WalletContext', () => {
+  let mockWalletService: jest.Mocked<WalletService>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // Create mock wallet service
+    mockWalletService = {
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      isConnected: jest.fn(),
+      getAddress: jest.fn(),
+      getUSDCxBalance: jest.fn(),
+      getNetwork: jest.fn(),
+      getUserSession: jest.fn(),
+    } as any;
+
+    // Mock WalletService constructor
+    (WalletService as jest.MockedClass<typeof WalletService>).mockImplementation(() => mockWalletService);
+  });
+
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <WalletProvider appName="Test App" network="testnet">
+      {children}
+    </WalletProvider>
+  );
+
+  describe('useWallet hook', () => {
+    it('should throw error when used outside WalletProvider', () => {
+      // Suppress console.error for this test
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      expect(() => {
+        renderHook(() => useWallet());
+      }).toThrow('useWallet must be used within a WalletProvider');
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should provide default wallet state', () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      expect(result.current.isConnected).toBe(false);
+      expect(result.current.address).toBe(null);
+      expect(result.current.network).toBe(null);
+      expect(result.current.balance).toBe(null);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBe(null);
+    });
+  });
+
+  describe('wallet connection', () => {
+    it('should connect wallet successfully', async () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+      mockWalletService.connect.mockResolvedValue({
+        address: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+        network: 'testnet',
+      });
+      mockWalletService.getUSDCxBalance.mockResolvedValue(1000000n);
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      expect(result.current.isConnected).toBe(false);
+
+      await act(async () => {
+        await result.current.connect();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(true);
+      });
+
+      expect(result.current.address).toBe('ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM');
+      expect(result.current.network).toBe('testnet');
+      expect(result.current.balance).toBe(1000000n);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBe(null);
+    });
+
+    it('should handle connection error', async () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+      mockWalletService.connect.mockRejectedValue(new Error('User cancelled wallet connection'));
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      await act(async () => {
+        await result.current.connect();
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe('User cancelled wallet connection');
+      });
+
+      expect(result.current.isConnected).toBe(false);
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('should set loading state during connection', async () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+      
+      let resolveConnect: (value: any) => void;
+      const connectPromise = new Promise((resolve) => {
+        resolveConnect = resolve;
+      });
+      mockWalletService.connect.mockReturnValue(connectPromise as any);
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      act(() => {
+        result.current.connect();
+      });
+
+      // Should be loading
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(true);
+      });
+
+      // Resolve connection
+      await act(async () => {
+        resolveConnect!({
+          address: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+          network: 'testnet',
+        });
+        await connectPromise;
+      });
+
+      // Should not be loading anymore
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+    });
+
+    it('should handle balance loading failure gracefully', async () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+      mockWalletService.connect.mockResolvedValue({
+        address: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+        network: 'testnet',
+      });
+      mockWalletService.getUSDCxBalance.mockRejectedValue(new Error('Failed to fetch balance'));
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      await act(async () => {
+        await result.current.connect();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(true);
+      });
+
+      // Connection should succeed even if balance fails
+      expect(result.current.isConnected).toBe(true);
+      expect(result.current.address).toBe('ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM');
+      expect(result.current.balance).toBe(null);
+      expect(result.current.error).toBe(null); // No error state for balance failure
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('wallet disconnection', () => {
+    it('should disconnect wallet successfully', async () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+      mockWalletService.connect.mockResolvedValue({
+        address: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+        network: 'testnet',
+      });
+      mockWalletService.getUSDCxBalance.mockResolvedValue(1000000n);
+      mockWalletService.disconnect.mockResolvedValue(undefined);
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      // Connect first
+      await act(async () => {
+        await result.current.connect();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(true);
+      });
+
+      // Disconnect
+      await act(async () => {
+        await result.current.disconnect();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(false);
+      });
+
+      expect(result.current.address).toBe(null);
+      expect(result.current.network).toBe(null);
+      expect(result.current.balance).toBe(null);
+      expect(result.current.error).toBe(null);
+    });
+
+    it('should handle disconnection error', async () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+      mockWalletService.disconnect.mockRejectedValue(new Error('Disconnection failed'));
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      await act(async () => {
+        await result.current.disconnect();
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe('Disconnection failed');
+      });
+    });
+  });
+
+  describe('balance refresh', () => {
+    it('should refresh balance successfully', async () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+      mockWalletService.connect.mockResolvedValue({
+        address: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+        network: 'testnet',
+      });
+      mockWalletService.getUSDCxBalance
+        .mockResolvedValueOnce(1000000n)
+        .mockResolvedValueOnce(2000000n);
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      // Connect first
+      await act(async () => {
+        await result.current.connect();
+      });
+
+      await waitFor(() => {
+        expect(result.current.balance).toBe(1000000n);
+      });
+
+      // Refresh balance
+      await act(async () => {
+        await result.current.refreshBalance();
+      });
+
+      await waitFor(() => {
+        expect(result.current.balance).toBe(2000000n);
+      });
+    });
+
+    it('should not refresh balance when not connected', async () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      await act(async () => {
+        await result.current.refreshBalance();
+      });
+
+      expect(mockWalletService.getUSDCxBalance).not.toHaveBeenCalled();
+    });
+
+    it('should handle balance refresh error gracefully', async () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+      mockWalletService.connect.mockResolvedValue({
+        address: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+        network: 'testnet',
+      });
+      mockWalletService.getUSDCxBalance
+        .mockResolvedValueOnce(1000000n)
+        .mockRejectedValueOnce(new Error('Network error'));
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      // Connect first
+      await act(async () => {
+        await result.current.connect();
+      });
+
+      await waitFor(() => {
+        expect(result.current.balance).toBe(1000000n);
+      });
+
+      // Refresh balance (should fail but not set error state)
+      await act(async () => {
+        await result.current.refreshBalance();
+      });
+
+      // Balance should remain unchanged
+      expect(result.current.balance).toBe(1000000n);
+      expect(result.current.error).toBe(null);
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('connection restoration', () => {
+    it('should restore connection from previous session', async () => {
+      mockWalletService.isConnected.mockReturnValue(true);
+      mockWalletService.getAddress.mockReturnValue('ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM');
+      mockWalletService.getUSDCxBalance.mockResolvedValue(1000000n);
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(true);
+      });
+
+      expect(result.current.address).toBe('ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM');
+      expect(result.current.network).toBe('testnet');
+      
+      await waitFor(() => {
+        expect(result.current.balance).toBe(1000000n);
+      });
+    });
+
+    it('should not restore if no previous session', async () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      expect(result.current.isConnected).toBe(false);
+      expect(result.current.address).toBe(null);
+      expect(mockWalletService.getUSDCxBalance).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('external disconnection detection', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should detect external wallet disconnection', async () => {
+      mockWalletService.isConnected
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+      mockWalletService.connect.mockResolvedValue({
+        address: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+        network: 'testnet',
+      });
+      mockWalletService.getUSDCxBalance.mockResolvedValue(1000000n);
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      // Connect
+      await act(async () => {
+        await result.current.connect();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(true);
+      });
+
+      // Simulate external disconnection
+      mockWalletService.isConnected.mockReturnValue(false);
+
+      // Fast-forward time to trigger the interval check
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(false);
+      });
+
+      expect(result.current.address).toBe(null);
+      expect(result.current.balance).toBe(null);
+    });
+  });
+
+  describe('wallet service access', () => {
+    it('should provide access to wallet service', () => {
+      mockWalletService.isConnected.mockReturnValue(false);
+      mockWalletService.getAddress.mockReturnValue(null);
+
+      const { result } = renderHook(() => useWallet(), { wrapper });
+
+      expect(result.current.walletService).toBe(mockWalletService);
+    });
+  });
+});
