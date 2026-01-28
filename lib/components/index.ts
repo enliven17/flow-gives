@@ -28,6 +28,9 @@ export { ShaderAnimation } from './ShaderAnimation';
 
 export { MobileMenu } from './MobileMenu';
 
+export { Navbar } from './Navbar';
+export type { NavbarProps } from './Navbar';
+
 export { ImageUpload } from './ImageUpload';
 export type { ImageUploadProps } from './ImageUpload';
 

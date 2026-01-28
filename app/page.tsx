@@ -1,75 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
 import { WalletConnectButton } from '@/lib/components/WalletConnectButton';
 import { Footer } from '@/lib/components/Footer';
 import { ShaderAnimation } from '@/lib/components/ShaderAnimation';
-import { MobileMenu } from '@/lib/components/MobileMenu';
+import { Navbar } from '@/lib/components/Navbar';
 import { WalletProvider } from '@/lib/contexts/wallet.context';
 import Link from 'next/link';
 
 export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   return (
     <WalletProvider appName="FlowGives">
       <main className="min-h-screen relative">
         {/* Header */}
-        <header className="bg-background-secondary/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border-default">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-            <div className="flex justify-between items-center">
-              <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <Image
-                  src="/logo.png"
-                  alt="StacksGives"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 sm:w-10 sm:h-10"
-                  priority
-                />
-                <span className="text-xl sm:text-2xl font-black tracking-tight text-text-primary">
-                  <span className="font-black">Stacks</span>
-                  <span className="logo-gradient font-black">Gives</span>
-                </span>
-              </Link>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Link
-                  href="/projects"
-                  className="hidden sm:block px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
-                >
-                  Projects
-                </Link>
-                <Link
-                  href="/my-projects"
-                  className="hidden sm:block px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
-                >
-                  My Projects
-                </Link>
-                <div className="hidden sm:block">
-                  <WalletConnectButton />
-                </div>
-                {/* Mobile Menu Button */}
-                <button
-                  onClick={() => setMobileMenuOpen(true)}
-                  className="sm:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
-                  aria-label="Open menu"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Mobile Menu */}
-        <MobileMenu 
-          isOpen={mobileMenuOpen} 
-          onClose={() => setMobileMenuOpen(false)}
-          showWallet
-        />
+        <Navbar showProjects showMyProjects showWallet />
 
         {/* Hero Section */}
         <section className="relative w-full py-20 md:py-32 overflow-hidden min-h-[600px]">
@@ -81,7 +24,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto relative z-10">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-text-primary mb-4 sm:mb-6 leading-tight px-2">
-              Fund the Future on Stacks
+              Fund the Future on Flow
             </h1>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-text-secondary mb-6 sm:mb-8 md:mb-10 leading-relaxed px-2">
               Transparent, decentralized crowdfunding powered by blockchain. 
@@ -133,7 +76,7 @@ export default function Home() {
               </div>
               <h3 className="text-lg sm:text-xl font-medium text-text-primary mb-2">Decentralized</h3>
               <p className="text-sm sm:text-base text-text-secondary">
-                Built on Stacks blockchain. No intermediaries. Funds go directly to project creators.
+                Built on Flow blockchain. No intermediaries. Funds go directly to project creators.
               </p>
             </div>
             <div className="p-6">

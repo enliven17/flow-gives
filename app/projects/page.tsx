@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { WalletConnectButton } from '@/lib/components/WalletConnectButton';
+import { Navbar } from '@/lib/components/Navbar';
 import { ProjectList } from '@/lib/components/ProjectList';
 import { Footer } from '@/lib/components/Footer';
 import { WalletProvider } from '@/lib/contexts/wallet.context';
@@ -79,7 +78,7 @@ function ProjectsContent() {
             Browse Projects
           </h1>
           <p className="text-sm sm:text-base text-text-secondary">
-            Discover and support innovative projects on Stacks
+            Discover and support innovative projects on Flow
           </p>
         </div>
         <Link
@@ -105,38 +104,10 @@ function ProjectsContent() {
 
 export default function ProjectsPage() {
   return (
-    <WalletProvider appName="StacksGives">
+    <WalletProvider appName="FlowGives">
       <div className="min-h-screen flex flex-col">
         {/* Header */}
-        <header className="bg-background-secondary/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border-default">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-            <div className="flex justify-between items-center">
-              <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <Image
-                  src="/logo.png"
-                  alt="StacksGives"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 sm:w-10 sm:h-10"
-                  priority
-                />
-                <span className="text-xl sm:text-2xl font-black tracking-tight text-text-primary">
-                  <span className="font-black">Stacks</span>
-                  <span className="logo-gradient font-black">Gives</span>
-                </span>
-              </Link>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Link
-                  href="/my-projects"
-                  className="hidden sm:block px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
-                >
-                  My Projects
-                </Link>
-                <WalletConnectButton />
-              </div>
-            </div>
-          </div>
-        </header>
+        <Navbar showMyProjects showWallet />
 
         {/* Main Content */}
         <div className="flex-1">

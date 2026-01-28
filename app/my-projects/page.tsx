@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { Navbar } from '@/lib/components/Navbar';
 import { WalletProvider, useWallet } from '@/lib/contexts/wallet.context';
 import { WalletConnectButton } from '@/lib/components/WalletConnectButton';
 import { ProjectCard } from '@/lib/components/ProjectCard';
@@ -213,41 +213,10 @@ function MyProjectsContent() {
 
 export default function MyProjectsPage() {
   return (
-    <WalletProvider appName="StacksGives">
+    <WalletProvider appName="FlowGives">
       <div className="min-h-screen flex flex-col">
         {/* Header */}
-        <header className="bg-background-secondary/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border-default">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-            <div className="flex justify-between items-center">
-              <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <Image
-                  src="/logo.png"
-                  alt="StacksGives"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 sm:w-10 sm:h-10"
-                  priority
-                />
-                <span className="text-xl sm:text-2xl font-black tracking-tight text-text-primary">
-                  <span className="font-black">Stacks</span>
-                  <span className="logo-gradient font-black">Gives</span>
-                </span>
-              </Link>
-              <div className="flex items-center gap-2 sm:gap-4">
-                <Link
-                  href="/projects/new"
-                  className="hidden sm:flex items-center gap-2 px-4 py-2 glass-green text-text-primary rounded-lg font-medium hover:opacity-90 transition-all"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Create Project
-                </Link>
-                <WalletConnectButton />
-              </div>
-            </div>
-          </div>
-        </header>
+        <Navbar showCreateProject showWallet />
 
         {/* Main Content */}
         <div className="flex-1">
