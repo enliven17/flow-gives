@@ -21,10 +21,10 @@ const config: Config = {
           muted: '#737373',        // Muted text
         },
         accent: {
-          primary: '#3b82f6',      // Blue accent
-          secondary: '#8b5cf6',    // Purple accent
+          primary: '#10b981',      // Green accent (was blue)
+          secondary: '#059669',    // Dark green secondary (was purple)
           success: '#10b981',      // Green for success
-          warning: '#f59e0b',      // Orange for warnings
+          warning: '#10b981',      // Green for warnings (was orange)
           error: '#ef4444',        // Red for errors
         },
         border: {

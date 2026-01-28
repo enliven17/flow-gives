@@ -18,20 +18,17 @@
     "storage:setup": "tsx scripts/setup-storage.ts",
     "add-image-column": "tsx scripts/add-image-column.ts",
     "add-images": "tsx scripts/add-image-column.ts && Invoke-RestMethod -Uri http://localhost:3001/api/projects/add-images -Method POST -ContentType application/json",
-    "deploy:contract": "tsx scripts/deploy-contract.ts",
-    "deploy:contract:check": "clarinet check"
+    "deploy:contract": "tsx scripts/deploy-contract.ts"
   },
   "dependencies": {
-    "@stacks/connect": "^8.2.4",
-    "@stacks/transactions": "^7.3.1",
-    "@stacks/network": "^7.3.1",
+    "@onflow/fcl": "^1.12.2",
+    "@onflow/types": "^1.4.0",
     "@supabase/supabase-js": "^2.39.3",
     "next": "^14.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
   },
   "devDependencies": {
-    "@stacks/network": "^7.3.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/jest": "^29.5.12",
@@ -46,7 +43,7 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.35",
-    "supabase": "^2.72.8",
+    "supabase": "^2.72.9",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.21.0",
     "typescript": "^5"

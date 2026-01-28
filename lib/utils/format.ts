@@ -1,10 +1,10 @@
 /**
- * Formatting utility functions for StacksGives crowdfunding platform
+ * Formatting utility functions for FlowGives crowdfunding platform
  * 
  * These functions handle display formatting for various data types including
- * wallet addresses, USDCx amounts, funding percentages, and time remaining.
+ * wallet addresses, Flow amounts, funding percentages, and time remaining.
  * 
- * Validates: Requirements 4.3, 4.5, 6.6
+ * Requirements: 4.3, 4.5, 6.6, 8.1, 8.2, 8.6, 8.7, 11.6
  */
 
 /**
@@ -12,8 +12,8 @@
  * 
  * Formula: (totalRaised / fundingGoal) * 100
  * 
- * @param totalRaised - Amount raised in micro-USDCx
- * @param fundingGoal - Funding goal in micro-USDCx
+ * @param totalRaised - Amount raised in micro-Flow
+ * @param fundingGoal - Funding goal in micro-Flow
  * @returns Percentage of goal achieved (0-100+), or 0 if goal is 0
  * 
  * @example
@@ -21,7 +21,7 @@
  * calculateFundingPercentage(150000000n, 100000000n) // Returns 150 (overfunded)
  * calculateFundingPercentage(0n, 100000000n) // Returns 0
  * 
- * Validates: Requirements 4.3
+ * Requirements: 4.3
  */
 export function calculateFundingPercentage(
   totalRaised: bigint,
@@ -83,24 +83,60 @@ export function formatWalletAddress(address: string): string {
 }
 
 /**
- * Format micro-USDCx amount to display string with 2 decimal places
+ * Format micro-Flow amount to display string with 2 decimal places
  * 
- * Converts from micro-USDCx (6 decimals) to USDCx display format.
- * 1 USDCx = 1,000,000 micro-USDCx
+ * Converts from micro-Flow (8 decimals) to Flow display format.
+ * 1 FLOW = 100,000,000 micro-Flow
  * 
- * @param microUsdcx - Amount in micro-USDCx (smallest unit)
+ * @param microFlow - Amount in micro-Flow (smallest unit)
  * @returns Formatted string with 2 decimal places (e.g., "1.50")
  * 
  * @example
- * formatUSDCx(1000000n) // Returns "1.00"
- * formatUSDCx(1500000n) // Returns "1.50"
- * formatUSDCx(123456n) // Returns "0.12"
+ * formatFlow(100000000n) // Returns "1.00"
+ * formatFlow(150000000n) // Returns "1.50"
+ * formatFlow(12345678n) // Returns "0.12"
  * 
- * Validates: Requirements 4.1, 4.2
+ * Requirements: 8.1, 8.2, 8.6
  */
-export function formatUSDCx(microUsdcx: bigint): string {
-  const usdcx = Number(microUsdcx) / 1_000_000;
-  return usdcx.toFixed(2);
+export function formatFlow(microFlow: bigint): string {
+  const flow = Number(microFlow) / 100_000_000;
+  return flow.toFixed(2);
+}
+
+/**
+ * Convert Flow to micro-Flow
+ * 
+ * @param flow - Amount in Flow tokens
+ * @returns Amount in micro-Flow (8 decimals)
+ * 
+ * Requirements: 8.7
+ */
+export function toMicroFlow(flow: number): bigint {
+  return BigInt(Math.floor(flow * 100_000_000));
+}
+
+/**
+ * Convert micro-Flow to Flow
+ * 
+ * @param microFlow - Amount in micro-Flow
+ * @returns Amount in Flow tokens
+ * 
+ * Requirements: 8.7
+ */
+export function fromMicroFlow(microFlow: bigint): number {
+  return Number(microFlow) / 100_000_000;
+}
+
+/**
+ * Validate Flow address format
+ * 
+ * @param address - Flow address to validate
+ * @returns true if valid Flow address format
+ * 
+ * Requirements: 11.6
+ */
+export function isValidFlowAddress(address: string): boolean {
+  return /^0x[a-fA-F0-9]{16}$/.test(address);
 }
 
 /**
