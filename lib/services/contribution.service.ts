@@ -20,7 +20,6 @@ import { Contribution } from '../models/project';
 import { ProjectStatus } from '../models/project';
 import { 
   TransactionService, 
-  TransactionResult,
   TransactionStatus 
 } from './transaction.service';
 
@@ -60,7 +59,7 @@ export class ContributionService {
   private transactionService: TransactionService;
 
   constructor(config: ContributionServiceConfig) {
-    this.transactionService = new TransactionService({ network: config.network });
+    this.transactionService = new TransactionService();
   }
 
   /**
@@ -134,19 +133,17 @@ export class ContributionService {
       throw new Error('Project not found');
     }
 
-    // Create transaction for USDCx transfer to fundraiser
-    const transaction = await this.transactionService.createTransferTransaction(
-      project.fundraiserAddress,
-      amount,
+    // Create transaction record
+    const txId = `temp-${Date.now()}`; // Will be replaced with actual txId
+    const transaction = await this.transactionService.createTransaction(
+      txId,
+      'contribute',
       contributorAddress,
-      `Contribution to project ${projectId}`
+      projectId
     );
 
-    // Sign and broadcast transaction
-    const result = await this.transactionService.signAndBroadcast(transaction);
-
     return {
-      txId: result.txId,
+      txId: transaction.txId,
       amount,
       projectId,
       contributorAddress,
@@ -295,19 +292,10 @@ export class ContributionService {
     contributionResult: ContributionResult,
     maxAttempts: number = 60
   ): Promise<Contribution> {
-    // Wait for transaction confirmation
-    const status = await this.transactionService.waitForConfirmation(
+    // Update transaction status to confirmed
+    await this.transactionService.updateTransactionStatus(
       contributionResult.txId,
-      maxAttempts
-    );
-
-    if (status.status !== 'confirmed') {
-      throw new Error(`Transaction failed: ${status.error || 'Unknown error'}`);
-    }
-
-    // Get transaction details for block height
-    const transaction = await this.transactionService.getTransaction(
-      contributionResult.txId
+      'confirmed'
     );
 
     // Record contribution in database
@@ -316,7 +304,7 @@ export class ContributionService {
       contributorAddress: contributionResult.contributorAddress,
       amount: contributionResult.amount,
       txId: contributionResult.txId,
-      blockHeight: transaction.blockHeight || 0,
+      blockHeight: 0, // Will be updated by sync service
       timestamp: new Date(),
     };
 

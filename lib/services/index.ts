@@ -6,22 +6,14 @@
 
 export { 
   WalletService,
-  formatUSDCx,
-  toMicroUSDCx,
-  fromMicroUSDCx,
   type WalletConnection,
   type WalletServiceConfig,
 } from './wallet.service';
 
 export {
   TransactionService,
-  toMicroUSDCx as txToMicroUSDCx,
-  fromMicroUSDCx as txFromMicroUSDCx,
-  type UnsignedTransaction,
-  type TransactionResult,
   type TransactionStatus,
   type Transaction,
-  type TransactionServiceConfig,
 } from './transaction.service';
 
 export {

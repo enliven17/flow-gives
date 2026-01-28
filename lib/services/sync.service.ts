@@ -248,7 +248,7 @@ export class SyncService {
       deadline: new Date(deadline * 1000).toISOString(),
       creator_address: creator,
       status: 'active',
-    });
+    } as any);
 
     console.log(`Synced project ${projectId}`);
   }
@@ -288,11 +288,11 @@ export class SyncService {
 
     // Create contribution
     await supabaseAdmin.from('contributions').insert({
-      project_id: project.id,
+      project_id: (project as any).id,
       contributor_address: contributor,
       amount: this.flowToMicroFlow(amount),
       tx_hash: event.transactionId,
-    });
+    } as any);
 
     // Update project current_amount (trigger will handle this automatically)
     console.log(`Synced contribution to project ${projectId}`);
@@ -305,8 +305,8 @@ export class SyncService {
     const { projectId, amount } = event.data;
 
     // Update project status to withdrawn
-    await supabaseAdmin
-      .from('projects')
+    await (supabaseAdmin
+      .from('projects') as any)
       .update({ status: 'withdrawn' })
       .eq('contract_id', projectId);
 
@@ -326,9 +326,9 @@ export class SyncService {
       .eq('contract_id', projectId)
       .single();
 
-    if (project && project.status === 'active') {
-      await supabaseAdmin
-        .from('projects')
+    if (project && (project as any).status === 'active') {
+      await (supabaseAdmin
+        .from('projects') as any)
         .update({ status: 'expired' })
         .eq('contract_id', projectId);
     }
@@ -349,7 +349,7 @@ export class SyncService {
     if (!existing) {
       await supabaseAdmin.from('users').insert({
         wallet_address: walletAddress,
-      });
+      } as any);
     }
   }
 

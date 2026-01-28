@@ -255,7 +255,7 @@ export class ProjectRepository {
 
     // Calculate unique contributor count
     const uniqueContributors = contributions 
-      ? new Set(contributions.map(c => c.contributor_address)).size 
+      ? new Set(contributions.map((c: any) => c.contributor_address)).size 
       : 0;
 
     // Add contributor count to row data
@@ -344,7 +344,7 @@ export class ProjectRepository {
     const contributorCounts = new Map<string, number>();
     if (contributions) {
       const contributorsByProject = new Map<string, Set<string>>();
-      contributions.forEach(c => {
+      contributions.forEach((c: any) => {
         if (!contributorsByProject.has(c.project_id)) {
           contributorsByProject.set(c.project_id, new Set());
         }

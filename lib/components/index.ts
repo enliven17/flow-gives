@@ -8,7 +8,7 @@ export { WalletConnectButton } from './WalletConnectButton';
 export type { WalletConnectButtonProps } from './WalletConnectButton';
 
 export { ContributionForm } from './ContributionForm';
-export type { ContributionFormProps, TransactionStatus } from './ContributionForm';
+export type { ContributionFormProps } from './ContributionForm';
 
 export { ProjectForm } from './ProjectForm';
 export type { ProjectFormProps } from './ProjectForm';

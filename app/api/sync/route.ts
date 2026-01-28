@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSyncService } from '@/lib/services/sync.service';
+import { SyncService } from '@/lib/services/sync.service';
 
 /**
  * POST /api/sync
@@ -18,8 +18,7 @@ import { getSyncService } from '@/lib/services/sync.service';
  * 
  * Request body (optional):
  * {
- *   projectId?: string; // Sync specific project (blockchain ID as string)
- *   syncAll?: boolean;   // Sync all projects
+ *   action?: 'start' | 'stop' | 'sync'; // Action to perform
  * }
  */
 export async function POST(request: NextRequest) {
@@ -28,32 +27,36 @@ export async function POST(request: NextRequest) {
     // Only authorized users should be able to trigger sync
 
     const body = await request.json().catch(() => ({}));
-    const syncService = getSyncService();
+    const action = body.action || 'sync';
 
-    if (body.projectId) {
-      // Sync specific project
-      const projectId = BigInt(body.projectId);
-      await syncService.syncProject(projectId);
+    // Create sync service instance
+    const syncService = new SyncService({
+      pollInterval: 60000, // 1 minute
+      startBlock: 0,
+    });
 
+    if (action === 'start') {
+      // Start continuous sync
+      await syncService.start();
       return NextResponse.json({
-        message: `Project ${projectId} synced successfully`,
-        projectId: projectId.toString(),
+        message: 'Sync service started',
       });
-    } else if (body.syncAll) {
-      // Sync all projects
-      const result = await syncService.syncAllProjects();
-
+    } else if (action === 'stop') {
+      // Stop sync service
+      await syncService.stop();
       return NextResponse.json({
-        message: 'Sync completed',
-        projectsSynced: result.projectsSynced,
-        contributionsSynced: result.contributionsSynced,
-        errors: result.errors,
+        message: 'Sync service stopped',
       });
     } else {
-      return NextResponse.json(
-        { error: 'Either projectId or syncAll must be provided' },
-        { status: 400 }
-      );
+      // One-time sync
+      await syncService.syncProjects();
+      await syncService.syncContributions();
+      await syncService.syncWithdrawals();
+      await syncService.syncRefunds();
+
+      return NextResponse.json({
+        message: 'Sync completed successfully',
+      });
     }
   } catch (error) {
     console.error('Error syncing:', error);

@@ -7,7 +7,7 @@
 docs
 # testing
 /coverage
-
+.kiro
 # next.js
 /.next/
 /out/
@@ -69,4 +69,6 @@ logs
 .clarinet/
 settings/
 deployments/
+.vercel
+
 .vercel
